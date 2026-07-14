@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Blue Room · Social Dashboard</title>
+<style>
+  :root {
+    --bg: #0D0D0D;
+    --bg2: #111;
+    --bg3: #161616;
+    --border: #1E1E1E;
+    --border2: #252525;
+    --text: #DDD;
+    --muted: #666;
+    --dim: #333;
+    --accent: #D4A853;
+    --accent-rgb: 212,168,83;
+    --green: #5DBB7E;
+    --amber: #D4A853;
+    --red: #C05050;
+    --ig: #E1306C;
+    --li: #0077B5;
+    --tt: #69C9D0;
+    --yt: #FF0000;
+    --fb: #1877F2;
+    --radius: 10px;
+    --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+  /* HEADER */
+  .header { position: sticky; top: 0; z-index: 100; background: var(--bg); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .logo { display: flex; align-items: center; gap: 8px; }
+  .logo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .logo-text { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; }
+
+  /* ACCOUNT SWITCHER */
+  .acct-switcher { display: flex; background: #0F0F0F; border-radius: 9px; border: 1px solid var(--border); padding: 3px; gap: 2px; }
+  .acct-btn { background: transparent; border: 1px solid transparent; border-radius: 7px; padding: 5px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s; }
+  .acct-btn.active { background: #1C1C1C; }
+  .acct-dot { width: 5px; height: 5px; border-radius: 50%; opacity: 0.3; transition: opacity 0.15s; }
+  .acct-btn.active .acct-dot { opacity: 1; }
+  .acct-name { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); font-weight: 400; transition: color 0.15s; }
+  .acct-btn.active .acct-name { font-weight: 700; }
+  .acct-handle { font-family: var(--mono); font-size: 9px; color: #222; transition: color 0.15s; }
+  .acct-btn.active .acct-handle { color: #555; }
+
+  /* STEPS */
+  .steps { display: flex; align-items: center; gap: 5px; }
+  .step { display: flex; align-items: center; gap: 4px; }
+  .step-num { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 9px; color: var(--dim); font-weight: 700; transition: all 0.2s; }
+  .step-num.active { border-color: var(--accent); color: var(--accent); }
+  .step-num.done { background: var(--accent); border-color: var(--accent); color: #0D0D0D; }
+  .step-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--dim); transition: color 0.2s; }
+  .step-label.active { color: var(--accent); }
+  .step-sep { color: #222; font-size: 10px; }
+
+  /* BANNER */
+  .banner { border-bottom: 1px solid #111; padding: 7px 20px; display: flex; align-items: center; gap: 10px; }
+  .banner-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .banner-platforms { display: flex; gap: 14px; flex-wrap: wrap; }
+  .bp { font-family: var(--mono); font-size: 10px; }
+
+  /* MAIN */
+  .main { max-width: 820px; margin: 0 auto; padding: 28px 20px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* TYPOGRAPHY */
+  h1 { font-size: 22px; font-weight: 300; color: var(--text); letter-spacing: -0.02em; margin-bottom: 5px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+
+  /* MODE TOGGLE */
+  .mode-toggle { display: flex; background: #0F0F0F; border-radius: 8px; border: 1px solid var(--border); padding: 3px; gap: 2px; width: fit-content; margin-bottom: 16px; }
+  .mode-btn { background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 5px 13px; cursor: pointer; font-family: var(--mono); font-size: 11px; color: var(--muted); transition: all 0.15s; }
+  .mode-btn.active { background: #1C1C1C; color: var(--accent); border-color: var(--accent); }
+
+  /* DROP ZONE */
+  .dropzone { border: 2px dashed var(--border2); border-radius: 14px; padding: 44px 32px; text-align: center; cursor: pointer; background: #0F0F0F; transition: all 0.2s; }
+  .dropzone:hover, .dropzone.drag-over { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.03); }
+  .dropzone.has-file { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.03); }
+  .dropzone-icon { font-size: 26px; margin-bottom: 10px; }
+  .dropzone-label { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
+  .dropzone-sub { color: var(--dim); font-family: var(--mono); font-size: 11px; }
+  .dropzone img, .dropzone video { max-height: 200px; max-width: 100%; border-radius: 7px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
+  .dropzone .file-name { color: var(--accent); font-family: var(--mono); font-size: 11px; }
+
+  /* DRIVE BOX */
+  .drive-box { background: #0F0F0F; border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .drive-box.resolved { border-color: var(--accent); }
+  .drive-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .drive-file { display: flex; align-items: center; gap: 10px; background: #141414; border-radius: 8px; padding: 10px 12px; }
+  .drive-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 5px; }
+  .drive-thumb-placeholder { width: 40px; height: 40px; background: #1A1A1A; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .drive-info { flex: 1; }
+  .drive-name { color: #CCC; font-size: 12px; margin-bottom: 2px; }
+  .drive-mime { color: var(--muted); font-family: var(--mono); font-size: 10px; }
+  .drive-ready { color: var(--accent); font-family: var(--mono); font-size: 10px; }
+  .drive-note { color: var(--dim); font-family: var(--mono); font-size: 10px; margin-top: 12px; line-height: 1.6; }
+
+  /* FORM */
+  label.field-label { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+  input[type=text], textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border2); border-radius: 7px; color: var(--text); font-size: 13px; padding: 8px 11px; font-family: inherit; outline: none; transition: border-color 0.15s; }
+  input[type=text]:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; line-height: 1.65; }
+  .field { margin-bottom: 14px; }
+
+  /* BUTTONS */
+  .btn-primary { background: var(--accent); border: none; color: #0D0D0D; border-radius: 7px; padding: 8px 16px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--mono); letter-spacing: 0.04em; display: inline-flex; align-items: center; gap: 7px; transition: opacity 0.15s; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--muted); border-radius: 6px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-family: var(--mono); letter-spacing: 0.04em; transition: all 0.15s; }
+  .btn-ghost:hover { border-color: #444; color: #AAA; }
+  .btn-approve { background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: var(--mono); letter-spacing: 0.04em; transition: all 0.15s; }
+  .btn-approve.approved { background: var(--accent); color: #0D0D0D; }
+  .btn-row { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+  .btn-row-right { display: flex; gap: 8px; align-items: center; }
+
+  /* SCORE PANEL */
+  .score-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 22px; }
+  .score-panel-header { width: 100%; background: transparent; border: none; padding: 13px 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; color: var(--text); }
+  .score-panel-header:hover { background: rgba(255,255,255,0.02); }
+  .score-header-left { display: flex; align-items: center; gap: 10px; }
+  .score-header-title { font-family: var(--mono); font-size: 11px; color: #888; letter-spacing: 0.08em; text-transform: uppercase; }
+  .score-badges { display: flex; gap: 6px; }
+  .score-badge { border-radius: 4px; padding: 1px 7px; font-family: var(--mono); font-size: 10px; border: 1px solid; }
+  .score-chevron { color: var(--muted); font-size: 11px; transition: transform 0.2s; }
+  .score-chevron.open { transform: rotate(180deg); }
+  .score-body { padding: 0 16px 16px; border-top: 1px solid var(--border); display: none; }
+  .score-body.open { display: block; }
+  .score-overall { color: var(--muted); font-size: 13px; font-style: italic; line-height: 1.6; margin: 13px 0 14px; }
+  .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 500px) { .score-grid { grid-template-columns: 1fr; } }
+  .score-card { background: var(--bg); border-radius: 10px; padding: 14px; border: 1px solid var(--border); }
+  .score-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .score-card-meta { }
+  .score-card-label { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 2px; }
+  .score-card-sub { font-family: var(--mono); font-size: 9px; color: var(--dim); }
+  .score-ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .score-verdict { color: #CCC; font-size: 12px; line-height: 1.5; margin-bottom: 8px; }
+  .score-tip { border-radius: 6px; padding: 7px 10px; font-size: 11px; border: 1px solid; }
+
+  /* CAPTION CARDS */
+  .caption-cards { display: flex; flex-direction: column; gap: 12px; }
+  .caption-card { background: #171717; border: 1px solid var(--border); border-radius: 12px; padding: 18px; transition: border-color 0.2s; }
+  .caption-card.approved { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.04); }
+  .caption-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; gap: 8px; flex-wrap: wrap; }
+  .caption-card-title { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+  .caption-card-icons { font-size: 14px; }
+  .caption-card-name { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+  .caption-card-sub { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+  .caption-card-actions { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+  .char-count { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  .char-count.over { color: var(--red); }
+
+  /* FIELD SECTIONS IN CARD */
+  .card-section-label { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; margin-top: 10px; }
+  .card-divider { border-top: 1px solid var(--border); margin: 10px 0; }
+  .caption-text { color: var(--text); font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+  .hashtag-text { color: var(--muted); font-size: 12px; line-height: 1.6; margin-top: 8px; }
+  .platform-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
+  .platform-tag { border-radius: 4px; padding: 2px 7px; font-family: var(--mono); font-size: 9px; border: 1px solid; }
+
+  /* CAPTION SCORE */
+  .caption-score { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .caption-score-ring { width: 28px; height: 28px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .caption-score-label { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .caption-score-verdict { color: #888; font-size: 12px; flex: 1; }
+  .caption-tip-wrap { width: 100%; margin-top: 6px; display: none; }
+  .caption-tip-wrap.open { display: block; }
+  .caption-tip { border-radius: 6px; padding: 7px 10px; font-size: 11px; border: 1px solid; }
+
+  /* EDIT FIELDS */
+  .edit-field { display: none; }
+  .edit-field.active { display: block; }
+  .view-field { display: block; }
+  .view-field.hidden { display: none; }
+
+  /* APPROVE ALL */
+  .all-approved { margin-top: 20px; border-radius: 10px; padding: 14px 18px; text-align: center; border: 1px solid var(--accent); background: rgba(var(--accent-rgb), 0.06); display: none; }
+  .all-approved.show { display: block; }
+  .all-approved-title { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 6px; }
+  .all-approved-sub { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+
+  /* PLATFORM REMINDER */
+  .platform-reminder { background: #0F0F0F; border: 1px solid var(--border); border-radius: 8px; padding: 11px 14px; margin-bottom: 18px; }
+  .platform-reminder-label { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .platform-reminder-items { display: flex; gap: 12px; flex-wrap: wrap; }
+  .pri { font-size: 12px; }
+
+  /* WAVEFORM */
+  .waveform { display: inline-flex; align-items: center; gap: 2px; height: 20px; }
+  .wave-bar { width: 3px; border-radius: 2px; background: #0D0D0D; animation: wv 1.2s ease-in-out infinite; }
+  @keyframes wv { 0%,100%{transform:scaleY(0.4);opacity:.4} 50%{transform:scaleY(1);opacity:1} }
+
+  /* MISC */
+  .error-msg { color: #B05050; font-family: var(--mono); font-size: 11px; margin-bottom: 10px; }
+  .drafts-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .drafts-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .scoring-note { color: var(--accent); }
+  .new-post-btn { margin-top: 14px; }
+  .asset-preview-small { display: flex; align-items: center; gap: 8px; background: var(--bg2); border-radius: 7px; padding: 8px 11px; border: 1px solid var(--border); width: fit-content; margin-bottom: 16px; }
+  .asset-preview-small img, .asset-preview-small video { height: 36px; width: 36px; object-fit: cover; border-radius: 4px; }
+  .asset-preview-small-name { color: #CCC; font-size: 12px; }
+  .asset-preview-small-sub { color: var(--dim); font-family: var(--mono); font-size: 10px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-dot" id="logoDot"></div>
+    <span class="logo-text">Social Dashboard</span>
+  </div>
+
+  <div class="acct-switcher">
+    <button class="acct-btn active" data-acct="blueroom" onclick="switchAccount('blueroom')">
+      <div class="acct-dot" style="background:#D4A853"></div>
+      <span class="acct-name" style="color:#D4A853">Blue Room Studios</span>
+      <span class="acct-handle">@blueroomstudios</span>
+    </button>
+    <button class="acct-btn" data-acct="personal" onclick="switchAccount('personal')">
+      <div class="acct-dot" style="background:#7B9EE0"></div>
+      <span class="acct-name">Itay Kashti</span>
+      <span class="acct-handle">@Itay_Kashti</span>
+    </button>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num active" id="step1num">1</div>
+      <span class="step-label active" id="step1lbl">Upload</span>
+    </div>
+    <span class="step-sep">›</span>
+    <div class="step">
+      <div class="step-num" id="step2num">2</div>
+      <span class="step-label" id="step2lbl">Context</span>
+    </div>
+    <span class="step-sep">›</span>
+    <div class="step">
+      <div class="step-num" id="step3num">3</div>
+      <span class="step-label" id="step3lbl">Drafts</span>
+    </div>
+  </div>
+</div>
+
+<!-- BANNER -->
+<div class="banner" id="banner">
+  <div class="banner-dot" id="bannerDot"></div>
+  <div class="banner-platforms" id="bannerPlatforms"></div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- PAGE 1: UPLOAD -->
+  <div class="page active" id="pageUpload">
+    <h1>Add your asset</h1>
+    <p class="subtitle">Upload a file or link from Google Drive. Claude scores it before writing captions.</p>
+
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="modeUploadBtn" onclick="setMode('upload')">⬆ Upload</button>
+      <button class="mode-btn" id="modeDriveBtn" onclick="setMode('drive')">🔗 Drive</button>
+    </div>
+
+    <!-- Upload zone -->
+    <div id="uploadZone" class="dropzone" onclick="document.getElementById('fileInput').click()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+      <input type="file" id="fileInput" accept="image/*,video/*" style="display:none" onchange="handleFileSelect(event)"/>
+      <div id="dropPlaceholder">
+        <div class="dropzone-icon">🎬</div>
+        <p class="dropzone-label">Drop image or video here</p>
+        <p class="dropzone-sub">or click to browse · max 20MB for images</p>
+      </div>
+      <div id="dropPreview" style="display:none"></div>
+    </div>
+
+    <!-- Drive zone -->
+    <div id="driveZone" style="display:none">
+      <div class="drive-box" id="driveBox">
+        <label class="field-label">Google Drive share link</label>
+        <div class="drive-row">
+          <input type="text" id="driveInput" placeholder="https://drive.google.com/file/d/..." style="flex:1" oninput="driveInputChanged()"/>
+          <button class="btn-primary" id="driveResolveBtn" onclick="resolveDrive()" disabled>Resolve</button>
+        </div>
+        <div id="driveError" class="error-msg" style="display:none">✗ Couldn't resolve. Make sure the file is shared as "Anyone with the link".</div>
+        <div id="driveResult" style="display:none" class="drive-file">
+          <div id="driveThumbWrap"></div>
+          <div class="drive-info">
+            <div class="drive-name" id="driveName"></div>
+            <div class="drive-mime" id="driveMime"></div>
+          </div>
+          <span class="drive-ready">✓ Ready</span>
+        </div>
+        <p class="drive-note">File must be shared as "Anyone with the link". Images: thumbnail sent to Claude vision. Video: file name + your notes used as context.</p>
+      </div>
+    </div>
+
+    <div class="btn-row" id="uploadContinueRow" style="display:none">
+      <div></div>
+      <button class="btn-primary" id="scoreBtn" onclick="scoreAsset()">
+        <span id="scoreBtnText">📊 Score & Continue →</span>
+      </button>
+      <p id="videoModeNote" style="display:none;font-family:var(--mono);font-size:10px;color:#555;margin-top:8px;text-align:right">Video: add notes on next screen before scoring</p>
+    </div>
+  </div>
+
+  <!-- PAGE 2: CONTEXT -->
+  <div class="page" id="pageContext">
+    <div id="assetScorePanel" class="score-panel" style="display:none">
+      <button class="score-panel-header" onclick="toggleScorePanel()">
+        <div class="score-header-left">
+          <span style="font-size:14px">📊</span>
+          <span class="score-header-title">Asset Intelligence</span>
+          <div class="score-badges" id="scoreBadges"></div>
+        </div>
+        <span class="score-chevron open" id="scoreChevron">▲</span>
+      </button>
+      <div class="score-body open" id="scoreBody">
+        <p class="score-overall" id="scoreOverall"></p>
+        <div class="score-grid">
+          <div class="score-card" id="viralCard"></div>
+          <div class="score-card" id="engCard"></div>
+        </div>
+      </div>
+    </div>
+
+    <h1>Add context</h1>
+    <p class="subtitle">The more specific you are, the better each platform's draft will be.</p>
+
+    <div id="contextAssetPreview"></div>
+
+    <div class="field">
+      <label class="field-label" id="titleLabel">Session title or artist name</label>
+      <input type="text" id="sessionTitle" placeholder="e.g. Live Session Content Day — The Midnight Echoes"/>
+    </div>
+    <div class="field">
+      <label class="field-label">Notes for Claude</label>
+      <textarea id="sessionNotes" rows="5" id="sessionNotes" placeholder="What's in the shot, the mood, what service does this showcase?&#10;&#10;e.g. Live Session Content Day. Four-piece, drum kit lit from behind. Push the 4K video angle."></textarea>
+    </div>
+
+    <div class="platform-reminder" id="platformReminder">
+      <div class="platform-reminder-label">Claude will generate</div>
+      <div class="platform-reminder-items" id="platformReminderItems"></div>
+    </div>
+
+    <div id="contextError" class="error-msg" style="display:none"></div>
+
+    <div class="btn-row">
+      <button class="btn-ghost" onclick="goTo('upload')">← Back</button>
+      <button class="btn-primary" id="generateBtn" onclick="generateDrafts()">
+        <span id="generateBtnText">Generate Drafts →</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- PAGE 3: DRAFTS -->
+  <div class="page" id="pageDrafts">
+    <div class="drafts-header">
+      <div>
+        <h1>Your drafts</h1>
+        <div class="drafts-meta" id="draftsMeta"></div>
+      </div>
+      <div class="btn-row-right">
+        <button class="btn-primary" id="exportBtn" onclick="exportAll()" style="display:none; padding:6px 12px; font-size:11px">Export ↓</button>
+        <button class="btn-ghost" onclick="regenerate()">Regenerate</button>
+      </div>
+    </div>
+
+    <div id="draftsScorePanel" class="score-panel" style="display:none">
+      <button class="score-panel-header" onclick="toggleDraftsScorePanel()">
+        <div class="score-header-left">
+          <span style="font-size:14px">📊</span>
+          <span class="score-header-title">Asset Intelligence</span>
+          <div class="score-badges" id="draftsScoreBadges"></div>
+        </div>
+        <span class="score-chevron" id="draftsScoreChevron">▼</span>
+      </button>
+      <div class="score-body" id="draftsScoreBody">
+        <p class="score-overall" id="draftsScoreOverall"></p>
+        <div class="score-grid">
+          <div class="score-card" id="draftsViralCard"></div>
+          <div class="score-card" id="draftsEngCard"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="caption-cards" id="captionCards"></div>
+
+    <div class="all-approved" id="allApproved">
+      <div class="all-approved-title">ALL DRAFTS APPROVED</div>
+      <div class="all-approved-sub">Export and paste into your scheduler, or copy each post above.</div>
+      <button class="btn-primary" onclick="exportAll()">Download all posts ↓</button>
+    </div>
+
+    <div class="new-post-btn">
+      <button class="btn-ghost" onclick="resetAll()" style="font-size:11px">+ New post</button>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const S = {
+  account: 'blueroom',
+  step: 'upload',
+  mode: 'upload',          // upload | drive
+  asset: null,             // File
+  assetType: null,         // image | video
+  assetBase64: null,
+  assetPreviewUrl: null,
+  driveFile: null,         // { id, name, mimeType, thumbnailUrl, isVideo }
+  notes: '',
+  sessionTitle: '',
+  assetScores: null,
+  captionScores: null,
+  drafts: null,
+  approved: {},
+  groups: [],
+};
+
+// ─── ACCOUNT CONFIG ──────────────────────────────────────────────────────────
+const ACCOUNTS = {
+  blueroom: {
+    accent: '#D4A853',
+    accentRgb: '212,168,83',
+    banner: [
+      { text:'📸👥🎵 One caption', color:'#E1306C' },
+      { text:'💼 LinkedIn insight', color:'#0077B5' },
+      { text:'▶️ YouTube title + description', color:'#FF0000' },
+    ],
+    groups: [
+      { id:'instagram_facebook_tiktok', label:'Instagram · Facebook · TikTok', subLabel:'Identical caption across all three', icons:'📸👥🎵', color:'#E1306C', type:'caption' },
+      { id:'linkedin', label:'LinkedIn', subLabel:'Starts personal, lands on an insight', icons:'💼', color:'#0077B5', type:'caption' },
+      { id:'youtube', label:'YouTube', subLabel:'Title + description + hashtags', icons:'▶️', color:'#FF0000', type:'youtube' },
+    ],
+    reminder: [
+      { text:'📸👥🎵 One caption for IG/FB/TT', color:'#E1306C' },
+      { text:'💼 LinkedIn insight', color:'#0077B5' },
+      { text:'▶️ YouTube title + description', color:'#FF0000' },
+    ],
+    titlePlaceholder: 'e.g. Live Session Content Day — The Midnight Echoes',
+    titleLabel: 'Session title or artist name',
+    notesPlaceholder: "What's in the shot, the mood, what service does this showcase?\n\ne.g. Live Session Content Day. Four-piece, drum kit lit from behind. Push the 4K video angle.",
+    systemPrompt: `You are the social media voice for Blue Room Studios, a premium recording studio in Kilburn, NW London run by Itay Kashti — composer, guitarist, producer, and videographer.
+
+BRAND: "Sound and vision" — not just audio, it's about the feeling. Audience: indie, post-punk, alternative, folk, acoustic R&B artists aged 35–62 in London. Services: recording, mixing/mastering, Live Session Content Days (pro audio + cinematic 4K video), artist development, sync licensing. Never generic. Always specific and atmospheric.
+
+Generate exactly 3 outputs:
+
+GROUP 1 — instagram_facebook_tiktok (ONE caption, identical across all three):
+Visual, emotional, atmospheric. Feels like a musician wrote it. Medium length. First line earns the scroll-stop. TikTok: first line must work as a hook. 4-6 lowercase hashtags.
+
+GROUP 2 — linkedin:
+Starts personal (a moment or observation from the session), lands on a broader insight about craft, music, or creative process. "Here's what this taught me..." energy but never preachy. First person. Authoritative but human. No studio promo language. 1-2 lowercase hashtags. Longer than Instagram copy.
+
+GROUP 3 — youtube:
+title: SEO-optimised, max 70 chars, format "[What it is] | [Hook]"
+caption: Similar feel to Instagram but structured for YouTube, 3-5 sentences + CTA ("Book a session → blue-room-studios.com")
+hashtags: 8-12 lowercase hashtags
+
+Return ONLY valid JSON, no markdown:
+{"instagram_facebook_tiktok":{"caption":"...","hashtags":"..."},"linkedin":{"caption":"...","hashtags":"..."},"youtube":{"title":"...","caption":"...","hashtags":"..."}}`,
+    assetScorePrompt: `You are a social media content strategist specialising in music and creative industry content. Analyse this asset for Blue Room Studios — a cinematic recording studio in London targeting indie/alternative musicians aged 35-62.
+
+Score on TWO dimensions out of 10:
+
+VIRAL POTENTIAL (new followers, reach, shareability): immediate visual hook, would strangers share it, surprise/beauty/intrigue, feels native not like an ad.
+
+ENGAGEMENT POTENTIAL (existing followers, saves, comments): invites conversation, fans would save or tag someone, behind-the-scenes authenticity, reinforces brand loyalty.
+
+Return ONLY valid JSON, no markdown:
+{"viral":{"score":7,"verdict":"One-line verdict","tip":"One specific improvement"},"engagement":{"score":8,"verdict":"One-line verdict","tip":"One specific improvement"},"overall":"One sentence overall read"}`,
+    captionScorePrompt: `You are a social media strategist. Score how well these captions serve the asset for Blue Room Studios. Score each out of 10: does it match the asset energy, maximise the platform algorithm, feel specific not templated, serve the audience?
+
+Return ONLY valid JSON, no markdown:
+{"instagram_facebook_tiktok":{"score":8,"verdict":"One-line verdict","tip":"One improvement"},"linkedin":{"score":7,"verdict":"One-line verdict","tip":"One improvement"},"youtube":{"score":9,"verdict":"One-line verdict","tip":"One improvement"}}`,
+  },
+  personal: {
+    accent: '#7B9EE0',
+    accentRgb: '123,158,224',
+    banner: [{ text:'Personal creative voice · Instagram only', color:'#666' }],
+    groups: [
+      { id:'instagram_facebook_tiktok', label:'Instagram', subLabel:'Personal creative voice', icons:'📸', color:'#E1306C', type:'caption' },
+    ],
+    reminder: [{ text:'📸 Personal Instagram caption', color:'#E1306C' }],
+    titlePlaceholder: "e.g. late-night guitar take, overdub session",
+    titleLabel: "What's this moment?",
+    notesPlaceholder: "How did this feel? What were you playing?\n\ne.g. Jazzmaster through a Vox, working on a post-punk track, room was quiet.",
+    systemPrompt: `You are writing for Itay Kashti's personal Instagram (@Itay_Kashti). British-Israeli musician, composer, guitarist, producer in London. Personal creative voice — NOT the studio brand. Musical taste: indie, post-punk, shoegaze, alternative, grunge, folk, acoustic R&B. Shoots on Sony A7V.
+
+VOICE: First person, authentic, introspective. A musician sharing what moves him. Never corporate. No studio promo.
+RULES: Lowercase hashtags only, 3-5 max. Medium length. First line earns the scroll-stop. Never promotional.
+
+Return ONLY valid JSON, no markdown:
+{"instagram_facebook_tiktok":{"caption":"...","hashtags":"..."}}`,
+    assetScorePrompt: `You are a social media strategist for personal creator accounts in music. Analyse this asset for Itay Kashti's personal Instagram — musician/producer, authentic introspective voice, music lovers audience.
+
+Score out of 10:
+VIRAL POTENTIAL: reach beyond existing followers, visual hook, emotional resonance.
+ENGAGEMENT POTENTIAL: existing followers comment/save/DM, feels authentic enough to build connection.
+
+Return ONLY valid JSON, no markdown:
+{"viral":{"score":7,"verdict":"One-line verdict","tip":"One improvement"},"engagement":{"score":8,"verdict":"One-line verdict","tip":"One improvement"},"overall":"One sentence overall read"}`,
+    captionScorePrompt: `Score this Instagram caption for a personal music creator account out of 10: matches visual energy, specific and authentic, first line earns scroll-stop, hashtags serve discovery without spam.
+
+Return ONLY valid JSON, no markdown:
+{"instagram_facebook_tiktok":{"score":8,"verdict":"One-line verdict","tip":"One improvement"}}`,
+  }
+};
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function init() {
+  const acc = ACCOUNTS[S.account];
+  S.groups = acc.groups;
+  // accent
+  document.documentElement.style.setProperty('--accent', acc.accent);
+  document.documentElement.style.setProperty('--accent-rgb', acc.accentRgb);
+  document.getElementById('logoDot').style.background = acc.accent;
+  document.getElementById('logoDot').style.boxShadow = `0 0 8px ${acc.accent}`;
+  document.getElementById('bannerDot').style.background = acc.accent;
+  // banner
+  const bp = document.getElementById('bannerPlatforms');
+  bp.innerHTML = acc.banner.map(b=>`<span class="bp" style="color:${b.color}">${b.text}</span>`).join('');
+  document.getElementById('banner').style.background = `rgba(${acc.accentRgb},0.03)`;
+  // account buttons
+  document.querySelectorAll('.acct-btn').forEach(btn => {
+    const isActive = btn.dataset.acct === S.account;
+    btn.classList.toggle('active', isActive);
+    const aAcc = ACCOUNTS[btn.dataset.acct];
+    btn.style.borderColor = isActive ? aAcc.accent : 'transparent';
+    btn.querySelector('.acct-name').style.color = isActive ? aAcc.accent : '#3A3A3A';
+  });
+  // reminder
+  const ri = document.getElementById('platformReminderItems');
+  ri.innerHTML = acc.reminder.map(r=>`<span class="pri" style="color:${r.color}">${r.text}</span>`).join('');
+  // title/notes placeholders
+  document.getElementById('titleLabel').textContent = acc.titleLabel;
+  document.getElementById('sessionTitle').placeholder = acc.titlePlaceholder;
+  document.getElementById('sessionNotes').placeholder = acc.notesPlaceholder;
+}
+
+function switchAccount(id) {
+  S.account = id;
+  resetAll();
+  init();
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
+function goTo(step) {
+  S.step = step;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const map = { upload:'pageUpload', context:'pageContext', drafts:'pageDrafts' };
+  document.getElementById(map[step]).classList.add('active');
+  updateSteps();
+  window.scrollTo(0,0);
+}
+
+function updateSteps() {
+  const steps = ['upload','context','drafts'];
+  const cur = steps.indexOf(S.step);
+  steps.forEach((s,i) => {
+    const num = document.getElementById(`step${i+1}num`);
+    const lbl = document.getElementById(`step${i+1}lbl`);
+    num.classList.remove('active','done');
+    lbl.classList.remove('active');
+    if (i < cur) { num.classList.add('done'); num.textContent='✓'; }
+    else { num.textContent = i+1; }
+    if (i === cur) { num.classList.add('active'); lbl.classList.add('active'); }
+  });
+}
+
+// ─── FILE HANDLING ───────────────────────────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag-over');
+  if (S.mode !== 'upload') return;
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+}
+function handleDragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('drag-over'); }
+function handleDragLeave(e) { document.getElementById('uploadZone').classList.remove('drag-over'); }
+function handleFileSelect(e) { const f=e.target.files[0]; if(f) processFile(f); }
+
+function processFile(file) {
+  const type = file.type.startsWith('video') ? 'video' : 'image';
+  S.asset = file; S.assetType = type; S.assetScores = null; S.assetBase64 = null;
+  S.assetPreviewUrl = URL.createObjectURL(file);
+
+  const preview = document.getElementById('dropPreview');
+  const placeholder = document.getElementById('dropPlaceholder');
+  const zone = document.getElementById('uploadZone');
+
+  const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+
+  if (type === 'image') {
+    if (file.size > 19 * 1024 * 1024) {
+      // over 19MB — warn and use text-only mode
+      preview.innerHTML = `<div style="font-size:28px;margin-bottom:10px">🖼️</div>
+        <p class="file-name" style="color:#C05050">${file.name} (${sizeMB} MB) — over 19MB, Claude will use filename + notes only</p>`;
+    } else {
+      preview.innerHTML = `<img src="${S.assetPreviewUrl}" alt="preview"/><p class="file-name">${file.name} (${sizeMB} MB) — click to replace</p>`;
+      const reader = new FileReader();
+      reader.onload = e => { S.assetBase64 = e.target.result.split(',')[1]; };
+      reader.readAsDataURL(file);
+    }
+  } else {
+    // Video — never send binary to API, always text-only
+    preview.innerHTML = `
+      <video src="${S.assetPreviewUrl}" controls style="max-height:200px;max-width:100%;border-radius:7px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto"></video>
+      <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:10px 14px;text-align:left;margin-top:8px">
+        <p style="font-family:var(--mono);font-size:10px;color:#D4A853;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px">🎬 Video mode</p>
+        <p style="font-size:12px;color:#777;line-height:1.6;margin:0">Claude can't analyse video frames directly — it will write captions from your <strong style="color:#AAA">session title + notes</strong> on the next screen. Add as much detail as you can: who's in the shot, the mood, the lighting, what service this showcases.</p>
+      </div>
+      <p class="file-name" style="margin-top:10px">${file.name} (${sizeMB} MB) — click to replace</p>`;
+    S.assetBase64 = null;
+  }
+
+  placeholder.style.display = 'none';
+  preview.style.display = 'block';
+  zone.classList.add('has-file');
+  document.getElementById('uploadContinueRow').style.display = 'flex';
+  // show hint for video
+  const note = document.getElementById('videoModeNote');
+  if (note) note.style.display = type === 'video' ? 'block' : 'none';
+}
+
+// ─── MODE TOGGLE ─────────────────────────────────────────────────────────────
+function setMode(mode) {
+  S.mode = mode;
+  document.getElementById('modeUploadBtn').classList.toggle('active', mode==='upload');
+  document.getElementById('modeDriveBtn').classList.toggle('active', mode==='drive');
+  document.getElementById('uploadZone').style.display = mode==='upload' ? 'block' : 'none';
+  document.getElementById('driveZone').style.display = mode==='drive' ? 'block' : 'none';
+  document.getElementById('uploadContinueRow').style.display =
+    (mode==='upload'&&S.asset)||(mode==='drive'&&S.driveFile) ? 'flex' : 'none';
+}
+
+// ─── GOOGLE DRIVE ────────────────────────────────────────────────────────────
+function driveInputChanged() {
+  const val = document.getElementById('driveInput').value.trim();
+  document.getElementById('driveResolveBtn').disabled = !val;
+  document.getElementById('driveError').style.display = 'none';
+  document.getElementById('driveResult').style.display = 'none';
+  S.driveFile = null;
+  document.getElementById('uploadContinueRow').style.display = 'none';
+}
+
+function extractDriveId(url) {
+  for (const p of [/\/file\/d\/([a-zA-Z0-9_-]+)/, /id=([a-zA-Z0-9_-]+)/, /\/d\/([a-zA-Z0-9_-]+)/]) {
+    const m = url.match(p); if (m) return m[1];
+  }
+  return null;
+}
+
+async function resolveDrive() {
+  const url = document.getElementById('driveInput').value.trim();
+  const fileId = extractDriveId(url);
+  if (!fileId) { document.getElementById('driveError').style.display='block'; return; }
+  const btn = document.getElementById('driveResolveBtn');
+  btn.innerHTML = waveformHTML('#0D0D0D');
+  btn.disabled = true;
+  document.getElementById('driveError').style.display = 'none';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:400,
+        mcp_servers:[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'google-drive-mcp'}],
+        messages:[{role:'user',content:`Get Google Drive file ID "${fileId}". Return ONLY JSON: name, mimeType, thumbnailLink. No other text.`}] }),
+    });
+    const data = await res.json();
+    let info = null;
+    for (const b of (data.content||[])) {
+      const txt = b.type==='mcp_tool_result' ? b.content?.[0]?.text : b.type==='text' ? b.text : null;
+      if (txt) { try { const p=JSON.parse(txt.replace(/```json|```/g,'').trim()); if(p.name||p.mimeType){info=p;break;} } catch{} }
+    }
+    if (info) {
+      S.driveFile = { id:fileId, name:info.name||'Drive file', mimeType:info.mimeType||'', thumbnailUrl:info.thumbnailLink||null, isVideo:(info.mimeType||'').startsWith('video') };
+      if (!document.getElementById('sessionTitle').value) document.getElementById('sessionTitle').value = info.name||'';
+      // show result
+      const tw = document.getElementById('driveThumbWrap');
+      tw.innerHTML = (info.thumbnailLink && !S.driveFile.isVideo)
+        ? `<img src="${info.thumbnailLink}" class="drive-thumb" alt=""/>`
+        : `<div class="drive-thumb-placeholder">${S.driveFile.isVideo?'🎬':'📄'}</div>`;
+      document.getElementById('driveName').textContent = info.name||'Drive file';
+      document.getElementById('driveMime').textContent = info.mimeType||'';
+      document.getElementById('driveResult').style.display = 'flex';
+      document.getElementById('driveBox').classList.add('resolved');
+      document.getElementById('uploadContinueRow').style.display = 'flex';
+    } else { document.getElementById('driveError').style.display='block'; }
+  } catch { document.getElementById('driveError').style.display='block'; }
+  finally { btn.textContent='Resolve'; btn.disabled=false; }
+}
+
+// ─── WAVEFORM ────────────────────────────────────────────────────────────────
+function waveformHTML(color='#0D0D0D') {
+  const heights = [10,14,18,22,18,14,10,14,18,14];
+  return `<span class="waveform">${heights.map((h,i)=>`<span class="wave-bar" style="height:${h}px;background:${color};animation-delay:${i*0.1}s"></span>`).join('')}</span>`;
+}
+
+// ─── SCORE RING SVG ───────────────────────────────────────────────────────────
+function scoreRingSVG(score, size=60) {
+  const r = size/2 - 5;
+  const circ = 2*Math.PI*r;
+  const fill = (score/10)*circ;
+  const col = score>=8?'#5DBB7E':score>=6?'#D4A853':'#C05050';
+  return `<svg width="${size}" height="${size}" style="transform:rotate(-90deg)">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#1E1E1E" stroke-width="5"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${col}" stroke-width="5" stroke-dasharray="${fill} ${circ}" stroke-linecap="round"/>
+    <text x="${size/2}" y="${size/2}" text-anchor="middle" dominant-baseline="central" style="fill:${col};font-size:16px;font-weight:700;font-family:monospace;transform:rotate(90deg);transform-origin:${size/2}px ${size/2}px">${score}</text>
+  </svg>`;
+}
+
+function scoreCardHTML(data, label, icon, desc) {
+  const col = data.score>=8?'#5DBB7E':data.score>=6?'#D4A853':'#C05050';
+  return `
+    <div class="score-card">
+      <div class="score-card-header">
+        <div class="score-card-meta">
+          <div class="score-card-label">${icon} ${label}</div>
+          <div class="score-card-sub">${desc}</div>
+        </div>
+        <div class="score-ring-wrap">${scoreRingSVG(data.score)}</div>
+      </div>
+      <div class="score-verdict">${data.verdict}</div>
+      <div class="score-tip" style="background:${col}11;border-color:${col}44;color:${col}">💡 ${data.tip}</div>
+    </div>`;
+}
+
+function renderScorePanel(scores, panelId, bodyId, chevronId, badgesId, overallId, viralId, engId) {
+  const panel = document.getElementById(panelId);
+  if (!scores) { panel.style.display='none'; return; }
+  panel.style.display = 'block';
+  // badges
+  const badges = document.getElementById(badgesId);
+  [scores.viral, scores.engagement].forEach(s => {
+    const col = s.score>=8?'#5DBB7E':s.score>=6?'#D4A853':'#C05050';
+    const b = document.createElement('span');
+    b.className='score-badge'; b.textContent=`${s.score}/10`;
+    b.style.color=col; b.style.borderColor=col+'44'; b.style.background=col+'11';
+    badges.appendChild(b);
+  });
+  document.getElementById(overallId).textContent = scores.overall;
+  document.getElementById(viralId).innerHTML = scoreCardHTML(scores.viral,'Viral','🚀','New followers & reach');
+  document.getElementById(engId).innerHTML = scoreCardHTML(scores.engagement,'Engagement','❤️','Existing followers');
+}
+
+function toggleScorePanel() {
+  const body = document.getElementById('scoreBody');
+  const chev = document.getElementById('scoreChevron');
+  const open = body.classList.toggle('open');
+  chev.textContent = open?'▲':'▼';
+  chev.classList.toggle('open', open);
+}
+function toggleDraftsScorePanel() {
+  const body = document.getElementById('draftsScoreBody');
+  const chev = document.getElementById('draftsScoreChevron');
+  const open = body.classList.toggle('open');
+  chev.textContent = open?'▲':'▼';
+  chev.classList.toggle('open', open);
+}
+
+// ─── BUILD IMAGE CONTENT ─────────────────────────────────────────────────────
+function buildImageBlock() {
+  if (S.mode==='drive'&&S.driveFile?.thumbnailUrl&&!S.driveFile.isVideo)
+    return { type:'image', source:{ type:'url', url:S.driveFile.thumbnailUrl } };
+  if (S.mode==='upload'&&S.assetType==='image'&&S.assetBase64)
+    return { type:'image', source:{ type:'base64', media_type:S.asset.type, data:S.assetBase64 } };
+  return null;
+}
+
+function contextText() {
+  return `Context: ${S.sessionTitle||'untitled'}\nNotes: ${S.notes||'None.'}`;
+}
+
+// ─── SCORE ASSET ─────────────────────────────────────────────────────────────
+async function scoreAsset() {
+  S.sessionTitle = document.getElementById('sessionTitle').value;
+  S.notes = document.getElementById('sessionNotes').value;
+  const btn = document.getElementById('scoreBtn');
+  btn.disabled = true;
+  document.getElementById('scoreBtnText').innerHTML = waveformHTML('#0D0D0D') + ' Analysing…';
+
+  const img = buildImageBlock();
+  const isVideoOnly = S.assetType === 'video' || (!img && S.mode === 'upload');
+
+  // For video: skip scoring if there are no notes yet — nothing to score from
+  // Just go straight to context so they can add notes first
+  if (isVideoOnly && !S.notes && !S.sessionTitle) {
+    btn.disabled = false;
+    document.getElementById('scoreBtnText').textContent = '📊 Score & Continue →';
+    renderContextAssetPreview();
+    goTo('context');
+    return;
+  }
+
+  try {
+    const acc = ACCOUNTS[S.account];
+    let content;
+    if (img) {
+      content = [img, {type:'text', text:`${contextText()}\nAnalyse this asset and return scores. Return only JSON.`}];
+    } else {
+      // Text-only scoring for video
+      content = `Asset type: video\nFilename: ${S.asset?.name||'unknown'}\n${contextText()}\n\nScore this video content based on context only (you cannot see the video). Be honest that you're scoring from description alone. Return only JSON.`;
+    }
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:600, system:acc.assetScorePrompt, messages:[{role:'user',content}] }),
+    });
+    const data = await res.json();
+
+    // Surface API-level errors clearly
+    if (data.error) {
+      console.error('API error:', data.error);
+      // Don't block flow — just skip scores and continue
+    } else {
+      const txt = data.content?.find(b=>b.type==='text')?.text||'';
+      try { S.assetScores = JSON.parse(txt.replace(/```json|```/g,'').trim()); }
+      catch(parseErr) { console.error('Score parse failed:', txt); }
+    }
+  } catch(e) {
+    console.error('Score fetch failed:', e);
+    // Non-blocking — just continue without scores
+  } finally {
+    btn.disabled = false;
+    document.getElementById('scoreBtnText').textContent = '📊 Score & Continue →';
+  }
+
+  document.getElementById('scoreBadges').innerHTML = '';
+  renderScorePanel(S.assetScores,'assetScorePanel','scoreBody','scoreChevron','scoreBadges','scoreOverall','viralCard','engCard');
+  renderContextAssetPreview();
+  goTo('context');
+}
+
+function renderContextAssetPreview() {
+  // Update notes placeholder for video — Claude needs more from you
+  if (S.assetType === 'video') {
+    const acc = ACCOUNTS[S.account];
+    document.getElementById('sessionNotes').placeholder =
+      acc.id === 'blueroom'
+        ? "Claude can't see the video directly — describe what's in it:\n\nWho's in frame, what they're doing, the mood, lighting, gear visible, what service this showcases.\n\ne.g. Four-piece band tracking live. Drum kit lit dramatically from behind. Vocalist centre frame. Cinematic, almost filmic. Push the Live Session Content Day angle."
+        : "Claude can't see the video — describe the moment:\n\nWhat were you playing, how did it feel, what's in frame, the mood.\n\ne.g. Jazzmaster through a Vox, working on a post-punk track. Room dark except for the amp glow. One take, kept it raw.";
+  }
+  const el = document.getElementById('contextAssetPreview');
+  if (S.mode==='drive'&&S.driveFile) {
+    el.innerHTML = `<div class="asset-preview-small">
+      ${S.driveFile.thumbnailUrl&&!S.driveFile.isVideo?`<img src="${S.driveFile.thumbnailUrl}" alt=""/>`:
+      `<div style="width:36px;height:36px;background:#1A1A1A;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px">${S.driveFile.isVideo?'🎬':'📄'}</div>`}
+      <div><div class="asset-preview-small-name">${S.driveFile.name}</div><div class="asset-preview-small-sub">Google Drive</div></div>
+    </div>`;
+  } else if (S.assetPreviewUrl) {
+    el.innerHTML = S.assetType==='image'
+      ? `<div class="asset-preview-small"><img src="${S.assetPreviewUrl}" alt=""/><div><div class="asset-preview-small-name">${S.asset.name}</div><div class="asset-preview-small-sub">${(S.asset.size/1024/1024).toFixed(1)} MB</div></div></div>`
+      : `<div class="asset-preview-small"><video src="${S.assetPreviewUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px"></video><div><div class="asset-preview-small-name">${S.asset.name}</div><div class="asset-preview-small-sub">Video</div></div></div>`;
+  } else { el.innerHTML=''; }
+}
+
+// ─── GENERATE DRAFTS ─────────────────────────────────────────────────────────
+async function generateDrafts() {
+  S.sessionTitle = document.getElementById('sessionTitle').value;
+  S.notes = document.getElementById('sessionNotes').value;
+  document.getElementById('contextError').style.display='none';
+  const btn = document.getElementById('generateBtn');
+  btn.disabled=true;
+  document.getElementById('generateBtnText').innerHTML = waveformHTML('#0D0D0D') + ' Generating…';
+  try {
+    const acc = ACCOUNTS[S.account];
+    const img = buildImageBlock();
+    let content, mcpServers;
+    if (S.mode==='drive'&&S.driveFile) {
+      if (img) { content=[img,{type:'text',text:`${contextText()}\nAnalyse and write all outputs. Return only JSON.`}]; }
+      else { mcpServers=[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'google-drive-mcp'}]; content=`Drive file: "${S.driveFile.name}" (${S.driveFile.mimeType})\n${contextText()}\nReturn only JSON.`; }
+    } else if (img) {
+      content=[img,{type:'text',text:`${contextText()}\nAnalyse carefully and write all outputs. Return only JSON.`}];
+    } else {
+      content=`Asset: ${S.assetType} — ${S.asset?.name||'file'}\n${contextText()}\nReturn only JSON.`;
+    }
+    const body={model:'claude-sonnet-4-6',max_tokens:1500,system:acc.systemPrompt,messages:[{role:'user',content}]};
+    if (mcpServers) body.mcp_servers=mcpServers;
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data=await res.json();
+    const txt=data.content?.find(b=>b.type==='text')?.text||'';
+    S.drafts=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    S.approved={};
+    S.captionScores=null;
+    renderDraftsPage();
+    goTo('drafts');
+    // score captions in background
+    scoreCaptions();
+  } catch(e) {
+    const msg = e?.message||'';
+    const friendly = msg.includes('JSON')
+      ? 'Claude returned an unexpected response. Try adding more detail in your notes and regenerate.'
+      : 'Something went wrong connecting to Claude. Check your connection and try again.';
+    document.getElementById('contextError').textContent = friendly;
+    document.getElementById('contextError').style.display = 'block';
+    console.error('generateDrafts error:', e);
+  } finally {
+    btn.disabled=false;
+    document.getElementById('generateBtnText').textContent='Generate Drafts →';
+  }
+}
+
+// ─── RENDER DRAFTS ───────────────────────────────────────────────────────────
+function renderDraftsPage() {
+  const acc = ACCOUNTS[S.account];
+  // meta
+  document.getElementById('draftsMeta').innerHTML = `${acc.groups.length > 1 ? acc.groups.length + ' drafts' : '1 draft'} · 0/${acc.groups.length} approved`;
+  // score panel (collapsed by default in drafts)
+  document.getElementById('draftsScoreBadges').innerHTML='';
+  renderScorePanel(S.assetScores,'draftsScorePanel','draftsScoreBody','draftsScoreChevron','draftsScoreBadges','draftsScoreOverall','draftsViralCard','draftsEngCard');
+
+  const container = document.getElementById('captionCards');
+  container.innerHTML = '';
+  S.groups.forEach(g => {
+    const d = S.drafts[g.id];
+    if (!d) return;
+    container.appendChild(makeCaptionCard(g, d));
+  });
+}
+
+function makeCaptionCard(group, data) {
+  const div = document.createElement('div');
+  div.className = 'caption-card';
+  div.id = `card-${group.id}`;
+
+  const isYT = group.type==='youtube';
+  const caption = data.caption||'';
+  const hashtags = data.hashtags||'';
+  const title = data.title||'';
+
+  div.innerHTML = `
+    <div class="caption-card-header">
+      <div>
+        <div class="caption-card-title">
+          <span class="caption-card-icons">${group.icons}</span>
+          <span class="caption-card-name" style="color:${group.color}">${group.label}</span>
+        </div>
+        <div class="caption-card-sub">${group.subLabel}</div>
+      </div>
+      <div class="caption-card-actions">
+        ${isYT?`<span class="char-count" id="charCount-${group.id}">${title.length}/70</span>`:''}
+        <button class="btn-ghost" onclick="toggleEdit('${group.id}')" id="editBtn-${group.id}">Edit</button>
+        <button class="btn-ghost" onclick="copyCard('${group.id}')` + `" id="copyBtn-${group.id}">Copy</button>
+        <button class="btn-approve" onclick="toggleApprove('${group.id}')` + `" id="approveBtn-${group.id}">Approve</button>
+      </div>
+    </div>
+
+    ${isYT?`
+      <div class="card-section-label">Title</div>
+      <div class="view-field" id="viewTitle-${group.id}"><p class="caption-text" style="font-weight:600;font-size:14px">${title}</p></div>
+      <div class="edit-field" id="editTitle-${group.id}"><input type="text" id="inputTitle-${group.id}" value="${escHtml(title)}" oninput="updateCharCount('${group.id}')" style="font-weight:600"/></div>
+      <div class="card-divider"></div>
+      <div class="card-section-label">Description</div>
+    `:''}
+
+    <div class="view-field" id="viewCaption-${group.id}"><p class="caption-text">${escHtml(caption)}</p></div>
+    <div class="edit-field" id="editCaption-${group.id}"><textarea id="inputCaption-${group.id}" rows="4">${escHtml(caption)}</textarea></div>
+
+    ${isYT?'<div class="card-section-label" style="margin-top:8px">Hashtags</div>':''}
+    <div class="view-field" id="viewHash-${group.id}"><p class="hashtag-text">${escHtml(hashtags)}</p></div>
+    <div class="edit-field" id="editHash-${group.id}"><textarea id="inputHash-${group.id}" rows="2" style="color:#777;margin-top:6px">${escHtml(hashtags)}</textarea></div>
+
+    ${group.id==='instagram_facebook_tiktok'?`
+      <div class="platform-tags" id="ptags-${group.id}">
+        <span class="platform-tag" style="color:#E1306C;border-color:#E1306C44;background:#E1306C11">📸 Instagram</span>
+        <span class="platform-tag" style="color:#1877F2;border-color:#1877F244;background:#1877F211">👥 Facebook</span>
+        <span class="platform-tag" style="color:#69C9D0;border-color:#69C9D044;background:#69C9D011">🎵 TikTok</span>
+      </div>`:''}
+
+    <div class="caption-score" id="cscore-${group.id}" style="display:none">
+      <div class="caption-score-ring" id="cring-${group.id}"></div>
+      <span class="caption-score-label">Caption score</span>
+      <span class="caption-score-verdict" id="cverdict-${group.id}"></span>
+      <button class="btn-ghost" onclick="toggleCaptionTip('${group.id}')` + `" style="font-size:10px">💡 Tip</button>
+      <div class="caption-tip-wrap" id="ctip-${group.id}">
+        <div class="caption-tip" id="ctiptext-${group.id}"></div>
+      </div>
+    </div>
+  `;
+  return div;
+}
+
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function updateCharCount(id) {
+  const val = document.getElementById(`inputTitle-${id}`)?.value||'';
+  const el = document.getElementById(`charCount-${id}`);
+  if (el) { el.textContent=`${val.length}/70`; el.classList.toggle('over', val.length>70); }
+}
+
+// ─── CARD ACTIONS ────────────────────────────────────────────────────────────
+function toggleEdit(id) {
+  const btn = document.getElementById(`editBtn-${id}`);
+  const isEditing = btn.textContent==='Save';
+  if (isEditing) {
+    // save
+    const g = S.groups.find(x=>x.id===id);
+    const cap = document.getElementById(`inputCaption-${id}`)?.value||'';
+    const hash = document.getElementById(`inputHash-${id}`)?.value||'';
+    const title = document.getElementById(`inputTitle-${id}`)?.value||'';
+    if (!S.drafts[id]) S.drafts[id]={};
+    S.drafts[id].caption=cap; S.drafts[id].hashtags=hash;
+    if (g?.type==='youtube') S.drafts[id].title=title;
+    // update views
+    document.getElementById(`viewCaption-${id}`).querySelector('.caption-text').textContent=cap;
+    document.getElementById(`viewHash-${id}`).querySelector('.hashtag-text').textContent=hash;
+    if (g?.type==='youtube') document.getElementById(`viewTitle-${id}`).querySelector('.caption-text').textContent=title;
+    // toggle
+    ['Caption','Hash','Title'].forEach(f => {
+      const vEl=document.getElementById(`view${f}-${id}`); const eEl=document.getElementById(`edit${f}-${id}`);
+      if(vEl){vEl.classList.remove('hidden');} if(eEl){eEl.classList.remove('active');}
+    });
+    btn.textContent='Edit';
+    const acc=ACCOUNTS[S.account];
+    btn.style.color=''; btn.style.borderColor='';
+  } else {
+    // enter edit
+    ['Caption','Hash','Title'].forEach(f => {
+      const vEl=document.getElementById(`view${f}-${id}`); const eEl=document.getElementById(`edit${f}-${id}`);
+      if(vEl){vEl.classList.add('hidden');} if(eEl){eEl.classList.add('active');}
+    });
+    btn.textContent='Save';
+    const acc=ACCOUNTS[S.account];
+    btn.style.color=acc.accent; btn.style.borderColor=acc.accent;
+  }
+}
+
+function copyCard(id) {
+  const g = S.groups.find(x=>x.id===id);
+  const d = S.drafts[id]||{};
+  let txt = g?.type==='youtube' ? `${d.title||''}\n\n${d.caption||''}\n\n${d.hashtags||''}` : `${d.caption||''}\n\n${d.hashtags||''}`;
+  navigator.clipboard.writeText(txt.trim());
+  const btn = document.getElementById(`copyBtn-${id}`);
+  btn.textContent='✓ Copied'; setTimeout(()=>btn.textContent='Copy',2000);
+}
+
+function toggleApprove(id) {
+  S.approved[id] = !S.approved[id];
+  const card = document.getElementById(`card-${id}`);
+  const btn = document.getElementById(`approveBtn-${id}`);
+  const acc = ACCOUNTS[S.account];
+  card.classList.toggle('approved', S.approved[id]);
+  btn.classList.toggle('approved', S.approved[id]);
+  btn.textContent = S.approved[id] ? '✓ Approved' : 'Approve';
+  updateApprovedUI();
+}
+
+function updateApprovedUI() {
+  const acc = ACCOUNTS[S.account];
+  const count = Object.values(S.approved).filter(Boolean).length;
+  const total = acc.groups.length;
+  document.getElementById('draftsMeta').innerHTML = `${total} draft${total>1?'s':''} · <span style="color:${count>0?acc.accent:'#555'}">${count}/${total} approved</span>`;
+  document.getElementById('exportBtn').style.display = count>0?'inline-flex':'none';
+  document.getElementById('allApproved').classList.toggle('show', count===total);
+}
+
+function toggleCaptionTip(id) {
+  const wrap = document.getElementById(`ctip-${id}`);
+  wrap.classList.toggle('open');
+}
+
+// ─── CAPTION SCORING ─────────────────────────────────────────────────────────
+async function scoreCaptions() {
+  const draftsMeta = document.getElementById('draftsMeta');
+  // show scoring note
+  const orig = draftsMeta.innerHTML;
+  draftsMeta.innerHTML += ` · <span class="scoring-note">scoring captions…</span>`;
+  try {
+    const acc = ACCOUNTS[S.account];
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:600, system:acc.captionScorePrompt,
+        messages:[{role:'user',content:`Asset: ${S.sessionTitle||'untitled'}. ${S.notes||''}\n\nCaptions:\n${JSON.stringify(S.drafts,null,2)}\n\nReturn only JSON.`}] }),
+    });
+    const data = await res.json();
+    const txt = data.content?.find(b=>b.type==='text')?.text||'';
+    S.captionScores = JSON.parse(txt.replace(/```json|```/g,'').trim());
+    // inject scores into cards
+    S.groups.forEach(g => {
+      const cs = S.captionScores[g.id];
+      if (!cs) return;
+      const col = cs.score>=8?'#5DBB7E':cs.score>=6?'#D4A853':'#C05050';
+      const scoreEl = document.getElementById(`cscore-${g.id}`);
+      const ringEl = document.getElementById(`cring-${g.id}`);
+      const verdictEl = document.getElementById(`cverdict-${g.id}`);
+      const tipEl = document.getElementById(`ctiptext-${g.id}`);
+      const tipWrap = document.getElementById(`ctip-${g.id}`);
+      if (scoreEl) scoreEl.style.display='flex';
+      if (ringEl) { ringEl.textContent=cs.score; ringEl.style.color=col; ringEl.style.borderColor=col; }
+      if (verdictEl) verdictEl.textContent=cs.verdict;
+      if (tipEl) { tipEl.textContent=`💡 ${cs.tip}`; tipEl.style.color=col; tipEl.style.borderColor=col+'44'; tipEl.style.background=col+'11'; }
+    });
+  } catch(e) { console.error('Caption scoring failed',e); }
+  updateApprovedUI(); // restore meta
+}
+
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
+function exportAll() {
+  const lines = S.groups
+    .filter(g=>S.approved[g.id]&&S.drafts?.[g.id])
+    .map(g => {
+      const d=S.drafts[g.id];
+      return g.type==='youtube'
+        ? `=== YOUTUBE ===\nTitle: ${d.title||''}\n\nDescription:\n${d.caption||''}\n\n${d.hashtags||''}`
+        : `=== ${g.label.toUpperCase()} ===\n${d.caption||''}\n\n${d.hashtags||''}`;
+    }).join('\n\n---\n\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([lines],{type:'text/plain'}));
+  a.download=`${S.account}-${(S.sessionTitle||'posts').replace(/\s+/g,'-')}.txt`;
+  a.click();
+}
+
+// ─── RESET ───────────────────────────────────────────────────────────────────
+function resetAll() {
+  S.asset=null; S.assetType=null; S.assetBase64=null; S.assetPreviewUrl=null;
+  S.driveFile=null; S.notes=''; S.sessionTitle='';
+  S.assetScores=null; S.captionScores=null; S.drafts=null; S.approved={};
+  // reset upload UI
+  document.getElementById('dropPlaceholder').style.display='block';
+  document.getElementById('dropPreview').style.display='none';
+  document.getElementById('dropPreview').innerHTML='';
+  document.getElementById('uploadZone').classList.remove('has-file');
+  document.getElementById('uploadContinueRow').style.display='none';
+  document.getElementById('fileInput').value='';
+  // reset drive UI
+  document.getElementById('driveInput').value='';
+  document.getElementById('driveError').style.display='none';
+  document.getElementById('driveResult').style.display='none';
+  document.getElementById('driveBox').classList.remove('resolved');
+  document.getElementById('driveResolveBtn').disabled=true;
+  // reset form
+  document.getElementById('sessionTitle').value='';
+  document.getElementById('sessionNotes').value='';
+  document.getElementById('contextError').style.display='none';
+  // reset score panel
+  document.getElementById('assetScorePanel').style.display='none';
+  document.getElementById('scoreBadges').innerHTML='';
+  document.getElementById('scoreBody').classList.remove('open');
+  document.getElementById('scoreChevron').textContent='▼';
+  // reset mode
+  setMode('upload');
+  goTo('upload');
+}
+
+function regenerate() {
+  S.drafts=null; S.captionScores=null; S.approved={};
+  goTo('context');
+}
+
+// ─── BOOT ────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
