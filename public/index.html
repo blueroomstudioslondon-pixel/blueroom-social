@@ -664,7 +664,7 @@ async function resolveDrive() {
   btn.disabled = true;
   document.getElementById('driveError').style.display = 'none';
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/claude', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:400,
         mcp_servers:[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'google-drive-mcp'}],
@@ -806,7 +806,7 @@ async function scoreAsset() {
       content = `Asset type: video\nFilename: ${S.asset?.name||'unknown'}\n${contextText()}\n\nScore this video content based on context only (you cannot see the video). Be honest that you're scoring from description alone. Return only JSON.`;
     }
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/claude', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:600, system:acc.assetScorePrompt, messages:[{role:'user',content}] }),
     });
@@ -880,7 +880,7 @@ async function generateDrafts() {
     }
     const body={model:'claude-sonnet-4-6',max_tokens:1500,system:acc.systemPrompt,messages:[{role:'user',content}]};
     if (mcpServers) body.mcp_servers=mcpServers;
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const data=await res.json();
     const txt=data.content?.find(b=>b.type==='text')?.text||'';
     S.drafts=JSON.parse(txt.replace(/```json|```/g,'').trim());
@@ -1073,7 +1073,7 @@ async function scoreCaptions() {
   draftsMeta.innerHTML += ` · <span class="scoring-note">scoring captions…</span>`;
   try {
     const acc = ACCOUNTS[S.account];
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/claude', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:600, system:acc.captionScorePrompt,
         messages:[{role:'user',content:`Asset: ${S.sessionTitle||'untitled'}. ${S.notes||''}\n\nCaptions:\n${JSON.stringify(S.drafts,null,2)}\n\nReturn only JSON.`}] }),
