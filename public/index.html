@@ -593,7 +593,7 @@ Return ONLY valid JSON, no markdown:
 // ─── WHISPER ──────────────────────────────────────────────────────────────────
 async function checkWhisper() {
   try {
-    const r = await fetch(WHISPER_URL+'/status',{signal:AbortSignal.timeout(2000)});
+   const r = await fetch(WHISPER_URL+'/status',{signal:AbortSignal.timeout(2000),headers:{'ngrok-skip-browser-warning':'true'}});
     const d = await r.json();
     document.getElementById('whisperStatus').textContent = '● online · '+d.model;
     document.getElementById('whisperStatus').className = 'whisper-status ok';
@@ -652,7 +652,7 @@ async function transcribeAudio() {
   try {
     const fd=new FormData();
     fd.append('audio',S.audioBlob,'memo.webm');
-    const r=await fetch(WHISPER_URL+'/transcribe',{method:'POST',body:fd});
+  const r=await fetch(WHISPER_URL+'/transcribe',{method:'POST',body:fd,headers:{'ngrok-skip-browser-warning':'true'}});
     const d=await r.json();
     if (d.transcript) {
       S.transcript=d.transcript;
