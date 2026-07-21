@@ -516,7 +516,7 @@
 </div>
 
 <script>
-const WHISPER_URL = 'https://oppressor-bribe-ground.ngrok-free.dev';
+const WHISPER_URL = 'http://127.0.0.1:5001';
 
 const S = {
   account:'blueroom', step:'upload', mode:'upload',
@@ -544,14 +544,14 @@ BRAND: "Sound and vision" — not just audio, it's about the feeling. Audience: 
 
 Generate exactly 3 outputs:
 
-GROUP 1 — instagram_facebook_tiktok: Visual, emotional, atmospheric. First line earns the scroll-stop. 4-6 lowercase hashtags.
+GROUP 1 — instagram_facebook_tiktok: Visual, emotional, atmospheric. First line earns the scroll-stop. Exactly 5 lowercase hashtags. Hashtags must have genuine reach potential — use broad, widely-searched music/studio/creative industry terms (e.g. #recordingstudio #livemusic #musicproduction #londonmusic #indiemusic). Never use track names, artist names, song titles, or niche proper nouns as hashtags unless they are genuinely widely searched terms.
 
-GROUP 2 — linkedin: Starts personal, lands on a broader insight. First person. Authoritative but human. 1-2 lowercase hashtags.
+GROUP 2 — linkedin: THIS GROUP IS MANDATORY — always include it, never skip it. Starts personal (a specific moment or observation from the session), lands on a broader insight about craft, music, or creative process. First person. Authoritative but human. No studio promo language. 1-2 lowercase hashtags with genuine professional reach (e.g. #musicproduction #creativity).
 
 GROUP 3 — youtube:
 title: SEO-optimised, max 70 chars, "[What it is] | [Hook]"
 caption: 3-5 sentences + CTA ("Book a session → blue-room-studios.com")
-hashtags: 8-12 lowercase hashtags
+hashtags: 8-12 lowercase hashtags, all widely searched, no niche proper nouns or track names
 
 IMPORTANT: If a voice memo transcript is included in the context, preserve the speaker's vocabulary, tone, and phrasing as much as possible. Only remove stutters and filler words.
 
@@ -593,7 +593,7 @@ Return ONLY valid JSON, no markdown:
 // ─── WHISPER ──────────────────────────────────────────────────────────────────
 async function checkWhisper() {
   try {
-   const r = await fetch(WHISPER_URL+'/status',{signal:AbortSignal.timeout(2000),headers:{'ngrok-skip-browser-warning':'true'}});
+    const r = await fetch(WHISPER_URL+'/status',{signal:AbortSignal.timeout(2000)});
     const d = await r.json();
     document.getElementById('whisperStatus').textContent = '● online · '+d.model;
     document.getElementById('whisperStatus').className = 'whisper-status ok';
@@ -652,7 +652,7 @@ async function transcribeAudio() {
   try {
     const fd=new FormData();
     fd.append('audio',S.audioBlob,'memo.webm');
-  const r=await fetch(WHISPER_URL+'/transcribe',{method:'POST',body:fd,headers:{'ngrok-skip-browser-warning':'true'}});
+    const r=await fetch(WHISPER_URL+'/transcribe',{method:'POST',body:fd});
     const d=await r.json();
     if (d.transcript) {
       S.transcript=d.transcript;
