@@ -297,7 +297,7 @@
   <!-- PAGE 2: VIDEO CONTEXT -->
   <div class="page" id="pageVideo">
     <h1>Describe your video</h1>
-    <p class="subtitle">Answer the questionnaire and record a quick voice memo — Claude will use this instead of analysing the video directly.</p>
+    <p class="subtitle">Claude samples frames directly from your video now. Add a bit of context below — especially the voice memo — so it also gets the story you can't see on screen.</p>
     <div id="videoAssetPreview"></div>
 
     <div class="video-q">
@@ -524,6 +524,7 @@ const S = {
   driveFile:null, notes:'', sessionTitle:'',
   assetScores:null, captionScores:null, drafts:null, approved:{}, groups:[],
   transcript:'', audioBlob:null,
+  videoFrames:null, videoFramesPromise:null,
 };
 
 const ACCOUNTS = {
@@ -697,14 +698,34 @@ function buildVideoContext() {
   return parts.join('\n');
 }
 
-function proceedFromVideo() {
+async function proceedFromVideo() {
   const title = document.getElementById('videoSessionTitle').value;
   S.sessionTitle = title;
   S.notes = buildVideoContext();
   document.getElementById('sessionTitle').value = title;
   document.getElementById('sessionNotes').value = S.notes;
   document.getElementById('contextBackBtn').onclick = ()=>goTo('video');
+  await scoreVideoAsset();
   goTo('context');
+}
+
+// ─── SCORE VIDEO ASSET (frame-based) ───────────────────────────────────────────
+async function scoreVideoAsset(){
+  if (S.videoFramesPromise) await S.videoFramesPromise;
+  const btn=document.querySelector('#pageVideo .btn-primary');
+  const label=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.innerHTML=waveformHTML('#0D0D0D')+' Analysing frames…';}
+  try{
+    const acc=ACCOUNTS[S.account];
+    const content=buildContentWithImages('Analyse and return scores. Return only JSON.');
+    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,system:acc.assetScorePrompt,messages:[{role:'user',content}]})});
+    const data=await res.json();
+    if(!data.error){const txt=data.content?.find(b=>b.type==='text')?.text||'';try{S.assetScores=JSON.parse(txt.replace(/```json|```/g,'').trim());}catch{}}
+  }catch(e){console.error('Video score failed:',e);}
+  finally{if(btn){btn.disabled=false;btn.textContent=label;}}
+  document.getElementById('scoreBadges').innerHTML='';
+  renderScorePanel(S.assetScores,'assetScorePanel','scoreBody','scoreChevron','scoreBadges','scoreOverall','viralCard','engCard');
+  renderContextAssetPreview();
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -766,6 +787,43 @@ function updateSteps() {
   }
 }
 
+// ─── VIDEO FRAME EXTRACTION ─────────────────────────────────────────────────────
+// Samples frames client-side (video + canvas, no server/ffmpeg needed) so Claude
+// can analyse the video directly instead of relying only on the questionnaire.
+function extractVideoFrames(file, targetFps, maxFrames) {
+  targetFps = targetFps || 1; maxFrames = maxFrames || 12;
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'auto'; video.muted = true; video.playsInline = true;
+    const url = URL.createObjectURL(file);
+    video.src = url;
+    const frames = [];
+    const cleanup = () => { URL.revokeObjectURL(url); };
+    video.addEventListener('loadedmetadata', () => {
+      const duration = video.duration;
+      if (!isFinite(duration) || duration <= 0) { cleanup(); resolve([]); return; }
+      const count = Math.max(1, Math.min(maxFrames, Math.round(duration * targetFps)));
+      const times = [];
+      for (let i = 0; i < count; i++) times.push((duration * (i + 0.5)) / count);
+      const canvas = document.createElement('canvas');
+      const scale = Math.min(1, 405 / (video.videoWidth || 405));
+      canvas.width = Math.max(1, Math.round((video.videoWidth || 405) * scale));
+      canvas.height = Math.max(1, Math.round((video.videoHeight || 720) * scale));
+      const ctx = canvas.getContext('2d');
+      let i = 0;
+      const onSeeked = () => {
+        try { ctx.drawImage(video, 0, 0, canvas.width, canvas.height); frames.push(canvas.toDataURL('image/jpeg', 0.7).split(',')[1]); } catch {}
+        i++;
+        if (i >= times.length) { video.removeEventListener('seeked', onSeeked); cleanup(); resolve(frames); }
+        else { video.currentTime = times[i]; }
+      };
+      video.addEventListener('seeked', onSeeked);
+      video.currentTime = times[0];
+    });
+    video.addEventListener('error', () => { cleanup(); resolve([]); });
+  });
+}
+
 // ─── FILE HANDLING ─────────────────────────────────────────────────────────────
 function handleDrop(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('drag-over');if(S.mode!=='upload')return;const f=e.dataTransfer.files[0];if(f)processFile(f);}
 function handleDragOver(e){e.preventDefault();document.getElementById('uploadZone').classList.add('drag-over');}
@@ -774,6 +832,7 @@ function handleFileSelect(e){const f=e.target.files[0];if(f)processFile(f);}
 function processFile(file) {
   const type=file.type.startsWith('video')?'video':'image';
   S.asset=file;S.assetType=type;S.assetScores=null;S.assetBase64=null;
+  S.videoFrames=null;S.videoFramesPromise=null;
   S.assetPreviewUrl=URL.createObjectURL(file);
   const preview=document.getElementById('dropPreview');
   const sizeMB=(file.size/1024/1024).toFixed(1);
@@ -781,8 +840,14 @@ function processFile(file) {
     if(file.size>19*1024*1024){preview.innerHTML='<p class="file-name" style="color:#C05050">'+file.name+' ('+sizeMB+' MB) — over 19MB, Claude will use filename + notes only</p>';}
     else{preview.innerHTML='<img src="'+S.assetPreviewUrl+'" alt="preview"/><p class="file-name">'+file.name+' ('+sizeMB+' MB)</p>';const reader=new FileReader();reader.onload=e=>{S.assetBase64=e.target.result.split(',')[1];};reader.readAsDataURL(file);}
   } else {
-    preview.innerHTML='<video src="'+S.assetPreviewUrl+'" controls style="max-height:200px;max-width:100%;border-radius:7px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto"></video><p class="file-name">'+file.name+' ('+sizeMB+' MB)</p>';
+    preview.innerHTML='<video src="'+S.assetPreviewUrl+'" controls style="max-height:200px;max-width:100%;border-radius:7px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto"></video><p class="file-name">'+file.name+' ('+sizeMB+' MB)</p><p class="file-name" id="frameStatus" style="color:#888">🎞 Extracting frames for analysis…</p>';
     S.assetBase64=null;
+    S.videoFramesPromise=extractVideoFrames(file).then(frames=>{
+      S.videoFrames=frames;
+      const st=document.getElementById('frameStatus');
+      if(st)st.textContent=frames.length?('✓ '+frames.length+' frame'+(frames.length>1?'s':'')+' ready for analysis'):'⚠ Could not read frames — will use questionnaire only';
+      return frames;
+    });
   }
   document.getElementById('dropPlaceholder').style.display='none';
   preview.style.display='block';
@@ -837,8 +902,21 @@ function scoreCardHTML(data,label,icon,desc){const col=data.score>=8?'#5DBB7E':d
 function renderScorePanel(scores,panelId,bodyId,chevronId,badgesId,overallId,viralId,engId){const panel=document.getElementById(panelId);if(!scores){panel.style.display='none';return;}panel.style.display='block';const badges=document.getElementById(badgesId);[scores.viral,scores.engagement].forEach(s=>{const col=s.score>=8?'#5DBB7E':s.score>=6?'#D4A853':'#C05050';const b=document.createElement('span');b.className='score-badge';b.textContent=s.score+'/10';b.style.color=col;b.style.borderColor=col+'44';b.style.background=col+'11';badges.appendChild(b);});document.getElementById(overallId).textContent=scores.overall;document.getElementById(viralId).innerHTML=scoreCardHTML(scores.viral,'Viral','🚀','New followers & reach');document.getElementById(engId).innerHTML=scoreCardHTML(scores.engagement,'Engagement','❤️','Existing followers');}
 function toggleScorePanel(){const body=document.getElementById('scoreBody');const chev=document.getElementById('scoreChevron');const open=body.classList.toggle('open');chev.textContent=open?'▲':'▼';}
 function toggleDraftsScorePanel(){const body=document.getElementById('draftsScoreBody');const chev=document.getElementById('draftsScoreChevron');const open=body.classList.toggle('open');chev.textContent=open?'▲':'▼';}
-function buildImageBlock(){if(S.mode==='drive'&&S.driveFile?.thumbnailUrl&&!S.driveFile.isVideo)return{type:'image',source:{type:'url',url:S.driveFile.thumbnailUrl}};if(S.mode==='upload'&&S.assetType==='image'&&S.assetBase64)return{type:'image',source:{type:'base64',media_type:S.asset.type,data:S.assetBase64}};return null;}
+function buildImageBlocks(){
+  if(S.mode==='drive'&&S.driveFile?.thumbnailUrl&&!S.driveFile.isVideo)return[{type:'image',source:{type:'url',url:S.driveFile.thumbnailUrl}}];
+  if(S.mode==='upload'&&S.assetType==='image'&&S.assetBase64)return[{type:'image',source:{type:'base64',media_type:S.asset.type,data:S.assetBase64}}];
+  if(S.mode==='upload'&&S.assetType==='video'&&S.videoFrames&&S.videoFrames.length)return S.videoFrames.map(f=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:f}}));
+  return null;
+}
 function contextText(){return 'Context: '+(S.sessionTitle||'untitled')+'\nNotes: '+(S.notes||'None.');}
+function buildContentWithImages(promptSuffix){
+  const imgs=buildImageBlocks();
+  if(!imgs||!imgs.length)return contextText()+'\n'+promptSuffix;
+  const blocks=[];
+  imgs.forEach((im,i)=>{if(imgs.length>1)blocks.push({type:'text',text:'Frame '+(i+1)+' of '+imgs.length+':'});blocks.push(im);});
+  blocks.push({type:'text',text:contextText()+'\n'+promptSuffix});
+  return blocks;
+}
 
 // ─── SCORE ASSET ───────────────────────────────────────────────────────────────
 async function scoreAsset(){
@@ -855,8 +933,7 @@ async function scoreAsset(){
   }
   try{
     const acc=ACCOUNTS[S.account];
-    const img=buildImageBlock();
-    const content=img?[img,{type:'text',text:contextText()+'\nAnalyse and return scores. Return only JSON.'}]:contextText()+'\nReturn only JSON.';
+    const content=buildContentWithImages('Analyse and return scores. Return only JSON.');
     const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,system:acc.assetScorePrompt,messages:[{role:'user',content}]})});
     const data=await res.json();
     if(!data.error){const txt=data.content?.find(b=>b.type==='text')?.text||'';try{S.assetScores=JSON.parse(txt.replace(/```json|```/g,'').trim());}catch{}}
@@ -883,10 +960,10 @@ async function generateDrafts(){
   btn.disabled=true;document.getElementById('generateBtnText').innerHTML=waveformHTML('#0D0D0D')+' Generating…';
   try{
     const acc=ACCOUNTS[S.account];
-    const img=buildImageBlock();
+    const imgs=buildImageBlocks();
     let content,mcpServers;
-    if(S.mode==='drive'&&S.driveFile){if(img){content=[img,{type:'text',text:contextText()+'\nWrite all outputs. Return only JSON.'}];}else{mcpServers=[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'google-drive-mcp'}];content='Drive file: "'+S.driveFile.name+'" ('+S.driveFile.mimeType+')\n'+contextText()+'\nReturn only JSON.';}}
-    else if(img){content=[img,{type:'text',text:contextText()+'\nWrite all outputs. Return only JSON.'}];}
+    if(S.mode==='drive'&&S.driveFile){if(imgs){content=buildContentWithImages('Write all outputs. Return only JSON.');}else{mcpServers=[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'google-drive-mcp'}];content='Drive file: "'+S.driveFile.name+'" ('+S.driveFile.mimeType+')\n'+contextText()+'\nReturn only JSON.';}}
+    else if(imgs){content=buildContentWithImages('Write all outputs. Return only JSON.');}
     else{content='Asset: '+S.assetType+' — '+(S.asset?.name||'file')+'\n'+contextText()+'\nReturn only JSON.';}
     const body={model:'claude-sonnet-4-6',max_tokens:1500,system:acc.systemPrompt,messages:[{role:'user',content}]};
     if(mcpServers)body.mcp_servers=mcpServers;
@@ -942,6 +1019,7 @@ function exportAll(){const lines=S.groups.filter(g=>S.approved[g.id]&&S.drafts?.
 
 function resetAll(){
   S.asset=null;S.assetType=null;S.assetBase64=null;S.assetPreviewUrl=null;
+  S.videoFrames=null;S.videoFramesPromise=null;
   S.driveFile=null;S.notes='';S.sessionTitle='';S.transcript='';S.audioBlob=null;
   S.assetScores=null;S.captionScores=null;S.drafts=null;S.approved={};
   document.getElementById('dropPlaceholder').style.display='block';
