@@ -376,13 +376,14 @@
         </div>
         <div class="q-field">
           <span class="q-label">Main audience</span>
-          <select class="q-select" id="qAudience">
+          <select class="q-select" id="qAudience" onchange="toggleCustomAudience()">
             <option value="">Select...</option>
             <option>Musicians / Artists</option>
             <option>Music fans / Listeners</option>
             <option>Industry / Professionals</option>
             <option>General / Broad</option>
           </select>
+          <input type="text" class="q-select" id="qAudienceCustom" placeholder="e.g. Bedroom producers experimenting with AI tools" style="display:none;margin-top:6px" oninput="S.customAudience=this.value">
         </div>
         <div class="q-field">
           <span class="q-label">On-screen text / titles?</span>
@@ -524,7 +525,7 @@ const S = {
   driveFile:null, notes:'', sessionTitle:'',
   assetScores:null, captionScores:null, drafts:null, approved:{}, groups:[],
   transcript:'', audioBlob:null,
-  videoFrames:null, videoFramesPromise:null,
+  videoFrames:null, videoFramesPromise:null, videoScorePromise:null, customAudience:'',
 };
 
 const ACCOUNTS = {
@@ -562,8 +563,9 @@ Return ONLY valid JSON, no markdown:
 Score on TWO dimensions out of 10:
 VIRAL POTENTIAL: immediate visual hook, shareability, surprise/beauty/intrigue.
 ENGAGEMENT POTENTIAL: invites conversation, fans would save or tag someone, behind-the-scenes authenticity.
+Also suggest 2-4 short audience labels (3-5 words each) that best fit THIS specific asset — don't force a single generic category if the content naturally spans multiple audiences (e.g. a BTS video about AI tools can suit both musicians and industry pros at once).
 Return ONLY valid JSON, no markdown:
-{"viral":{"score":7,"verdict":"One-line verdict","tip":"One specific improvement"},"engagement":{"score":8,"verdict":"One-line verdict","tip":"One specific improvement"},"overall":"One sentence overall read"}`,
+{"viral":{"score":7,"verdict":"One-line verdict","tip":"One specific improvement"},"engagement":{"score":8,"verdict":"One-line verdict","tip":"One specific improvement"},"overall":"One sentence overall read","audienceOptions":["Musicians & producers","Industry pros & labels"]}`,
     captionScorePrompt:`You are a social media strategist. Score how well these captions serve the asset for Blue Room Studios. Score each out of 10.
 Return ONLY valid JSON, no markdown:
 {"instagram_facebook_tiktok":{"score":8,"verdict":"One-line verdict","tip":"One improvement"},"linkedin":{"score":7,"verdict":"One-line verdict","tip":"One improvement"},"youtube":{"score":9,"verdict":"One-line verdict","tip":"One improvement"}}`,
@@ -583,8 +585,9 @@ Return ONLY valid JSON, no markdown:
 {"instagram_facebook_tiktok":{"caption":"...","hashtags":"..."}}`,
     assetScorePrompt:`You are a social media strategist for personal creator accounts in music. Analyse this asset for Itay Kashti's personal Instagram.
 Score out of 10: VIRAL POTENTIAL and ENGAGEMENT POTENTIAL.
+Also suggest 2-4 short audience labels (3-5 words each) that best fit THIS specific asset — don't force a single generic category if the content naturally spans multiple audiences.
 Return ONLY valid JSON, no markdown:
-{"viral":{"score":7,"verdict":"One-line verdict","tip":"One improvement"},"engagement":{"score":8,"verdict":"One-line verdict","tip":"One improvement"},"overall":"One sentence overall read"}`,
+{"viral":{"score":7,"verdict":"One-line verdict","tip":"One improvement"},"engagement":{"score":8,"verdict":"One-line verdict","tip":"One improvement"},"overall":"One sentence overall read","audienceOptions":["Musicians & producers","Music fans"]}`,
     captionScorePrompt:`Score this Instagram caption for a personal music creator account out of 10.
 Return ONLY valid JSON, no markdown:
 {"instagram_facebook_tiktok":{"score":8,"verdict":"One-line verdict","tip":"One improvement"}}`,
@@ -678,7 +681,9 @@ function buildVideoContext() {
     mood: document.getElementById('qMood').value,
     setting: document.getElementById('qSetting').value,
     camera: document.getElementById('qCamera').value,
-    audience: document.getElementById('qAudience').value,
+    audience: document.getElementById('qAudience').value === '__custom__'
+      ? (document.getElementById('qAudienceCustom').value || '')
+      : document.getElementById('qAudience').value,
     text: document.getElementById('qText').value,
     message: document.getElementById('qMessage').value,
   };
@@ -705,7 +710,7 @@ async function proceedFromVideo() {
   document.getElementById('sessionTitle').value = title;
   document.getElementById('sessionNotes').value = S.notes;
   document.getElementById('contextBackBtn').onclick = ()=>goTo('video');
-  await scoreVideoAsset();
+  await (S.videoScorePromise || scoreVideoAsset());
   goTo('context');
 }
 
@@ -725,7 +730,25 @@ async function scoreVideoAsset(){
   finally{if(btn){btn.disabled=false;btn.textContent=label;}}
   document.getElementById('scoreBadges').innerHTML='';
   renderScorePanel(S.assetScores,'assetScorePanel','scoreBody','scoreChevron','scoreBadges','scoreOverall','viralCard','engCard');
+  populateAudienceOptions(S.assetScores&&S.assetScores.audienceOptions);
   renderContextAssetPreview();
+}
+
+// ─── AUDIENCE SUGGESTIONS ───────────────────────────────────────────────────────
+function populateAudienceOptions(options){
+  const sel=document.getElementById('qAudience');
+  const prev=sel.value;
+  const list=(options&&options.length)?options:['Musicians / Artists','Music fans / Listeners','Industry / Professionals','General / Broad'];
+  sel.innerHTML='<option value="">Select...</option>'+list.map(o=>'<option>'+escHtml(o)+'</option>').join('')+'<option value="__custom__">Other (type your own)…</option>';
+  if(list.includes(prev)||prev==='__custom__')sel.value=prev;
+  toggleCustomAudience();
+}
+function toggleCustomAudience(){
+  const sel=document.getElementById('qAudience');
+  const custom=document.getElementById('qAudienceCustom');
+  const isCustom=sel.value==='__custom__';
+  custom.style.display=isCustom?'block':'none';
+  if(isCustom)custom.focus();
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -832,7 +855,7 @@ function handleFileSelect(e){const f=e.target.files[0];if(f)processFile(f);}
 function processFile(file) {
   const type=file.type.startsWith('video')?'video':'image';
   S.asset=file;S.assetType=type;S.assetScores=null;S.assetBase64=null;
-  S.videoFrames=null;S.videoFramesPromise=null;
+  S.videoFrames=null;S.videoFramesPromise=null;S.videoScorePromise=null;S.customAudience='';
   S.assetPreviewUrl=URL.createObjectURL(file);
   const preview=document.getElementById('dropPreview');
   const sizeMB=(file.size/1024/1024).toFixed(1);
@@ -929,7 +952,9 @@ async function scoreAsset(){
     if(S.assetPreviewUrl)el.innerHTML='<div class="asset-preview-small"><video src="'+S.assetPreviewUrl+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px"></video><div><div class="asset-preview-small-name">'+S.asset.name+'</div><div class="asset-preview-small-sub">Video</div></div></div>';
     else if(S.driveFile)el.innerHTML='<div class="asset-preview-small"><div style="width:36px;height:36px;background:#1A1A1A;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px">🎬</div><div><div class="asset-preview-small-name">'+S.driveFile.name+'</div><div class="asset-preview-small-sub">Google Drive · Video</div></div></div>';
     btn.disabled=false;document.getElementById('scoreBtnText').textContent='📊 Score & Continue →';
-    goTo('video');return;
+    goTo('video');
+    S.videoScorePromise = scoreVideoAsset();
+    return;
   }
   try{
     const acc=ACCOUNTS[S.account];
@@ -1019,7 +1044,7 @@ function exportAll(){const lines=S.groups.filter(g=>S.approved[g.id]&&S.drafts?.
 
 function resetAll(){
   S.asset=null;S.assetType=null;S.assetBase64=null;S.assetPreviewUrl=null;
-  S.videoFrames=null;S.videoFramesPromise=null;
+  S.videoFrames=null;S.videoFramesPromise=null;S.videoScorePromise=null;S.customAudience='';
   S.driveFile=null;S.notes='';S.sessionTitle='';S.transcript='';S.audioBlob=null;
   S.assetScores=null;S.captionScores=null;S.drafts=null;S.approved={};
   document.getElementById('dropPlaceholder').style.display='block';
