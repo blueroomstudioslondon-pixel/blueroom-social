@@ -209,14 +209,14 @@
     <span class="logo-text">Social Dashboard</span>
   </div>
   <div class="acct-switcher">
-    <button class="acct-btn active" data-acct="blueroom" onclick="switchAccount('blueroom')">
+    <button class="acct-btn" data-acct="blueroom" onclick="switchAccount('blueroom')">
       <div class="acct-dot" style="background:#D4A853"></div>
-      <span class="acct-name" style="color:#D4A853">Blue Room Studios</span>
+      <span class="acct-name">Blue Room Studios</span>
       <span class="acct-handle">@blueroomstudios</span>
     </button>
-    <button class="acct-btn" data-acct="personal" onclick="switchAccount('personal')">
+    <button class="acct-btn active" data-acct="personal" onclick="switchAccount('personal')">
       <div class="acct-dot" style="background:#7B9EE0"></div>
-      <span class="acct-name">Itay Kashti</span>
+      <span class="acct-name" style="color:#7B9EE0">Itay Kashti</span>
       <span class="acct-handle">@Itay_Kashti</span>
     </button>
   </div>
@@ -519,8 +519,55 @@
 <script>
 const WHISPER_URL = 'http://127.0.0.1:5001';
 
+const YT_LONGFORM_STATIC = `━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎸 LEARN ACOUSTIC GUITAR RECORDING
+https://shorturl.at/uApcS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 MORE LIKE THIS
+Music production playlist → https://shorturl.at/2JirI
+Live sessions in the studio → https://shorturl.at/XssAf
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+★ FOLLOW ME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Instagram (personal) → instagram.com/itay_kashti
+Instagram (studio)   → instagram.com/blue_room_studios
+Facebook             → facebook.com/ItayKashtiMusicProducer
+Patreon              → https://shorturl.at/6Oulp
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+★ MY STUDIO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Blue Room Studios London → https://www.blue-room-studios.com
+Work with me             → https://shorturl.at/3MgWD
+Get in touch             → https://shorturl.at/Ez8p0
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+★ LISTEN TO MY MUSIC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Spotify     → https://shorturl.at/x6rFt
+Apple Music → https://shorturl.at/sWz8U
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔔 Subscribe → https://shorturl.at/w85mV
+
+If you're new here — I'm Itay Kashti, music composer and producer based in London. I make music for media, write songs, and produce artists. Been at it since 2008, and I share what I know here.
+
+If you enjoyed this, a like and subscribe genuinely helps. Thank you for watching.`;
+
+function assembleYoutubeLongform(d){
+  if(!d)return d;
+  const top=(d.topHashtags||'').trim();
+  const story=(d.story||'').trim();
+  const bottom=(d.bottomHashtags||'').trim();
+  d.caption=[top,story].filter(Boolean).join('\n')+'\n\n'+YT_LONGFORM_STATIC+'\n\n'+bottom;
+  d.hashtags='';
+  return d;
+}
+
 const S = {
-  account:'blueroom', step:'upload', mode:'upload',
+  account:'personal', step:'upload', mode:'upload',
   asset:null, assetType:null, assetBase64:null, assetPreviewUrl:null,
   driveFile:null, notes:'', sessionTitle:'',
   assetScores:null, captionScores:null, drafts:null, approved:{}, groups:[],
@@ -572,25 +619,36 @@ Return ONLY valid JSON, no markdown:
   },
   personal: {
     accent:'#7B9EE0', accentRgb:'123,158,224',
-    banner:[{text:'Personal creative voice · Instagram only',color:'#666'}],
-    groups:[{id:'instagram_facebook_tiktok',label:'Instagram',subLabel:'Personal creative voice',icons:'📸',color:'#E1306C',type:'caption'}],
-    reminder:[{text:'📸 Personal Instagram caption',color:'#E1306C'}],
+    banner:[{text:'Personal creative voice · Instagram',color:'#666'},{text:'▶️ YouTube long-form description',color:'#FF0000'}],
+    groups:[
+      {id:'instagram_facebook_tiktok',label:'Instagram',subLabel:'Personal creative voice',icons:'📸',color:'#E1306C',type:'caption'},
+      {id:'youtube_longform',label:'YouTube',subLabel:'Long-form video description',icons:'▶️',color:'#FF0000',type:'caption'},
+    ],
+    reminder:[{text:'📸 Personal Instagram caption',color:'#E1306C'},{text:'▶️ YouTube long-form description',color:'#FF0000'}],
     titlePlaceholder:'e.g. late-night guitar take, overdub session',
     titleLabel:"What's this moment?",
-    systemPrompt:`You are writing for Itay Kashti's personal Instagram (@Itay_Kashti). British-Israeli musician, composer, guitarist, producer in London. Personal creative voice — NOT the studio brand.
-VOICE: First person, authentic, introspective. Never corporate.
-RULES: Lowercase hashtags only, 3-5 max. First line earns the scroll-stop.
+    systemPrompt:`You are writing for Itay Kashti — British-Israeli music composer, guitarist and producer based in London. Personal creative voice — NOT the studio brand. First person, authentic, introspective. Never corporate.
 IMPORTANT: If a voice memo transcript is included, preserve the speaker's vocabulary and tone. Only remove stutters and filler words.
+
+GROUP 1 — instagram_facebook_tiktok:
+Lowercase hashtags only, 3-5 max. First line earns the scroll-stop.
+
+GROUP 2 — youtube_longform (a YouTube long-form video description):
+You are filling in ONLY the variable parts of a fixed description template — the links/follow/subscribe sections are added automatically afterwards, so do NOT write them yourself. Write exactly three fields:
+- topHashtags: exactly 3 lowercase hashtags that best identify this specific video (these show above the title on YouTube — pick the most identifying 3, usually a subset of bottomHashtags).
+- story: 3-5 short paragraphs (separate paragraphs with a blank line), first person, genuine and a little reflective about the creative process or technique behind this specific video — not generic promo copy. End on a short line inviting the viewer's thoughts. If the notes mention specific gear used for filming/recording, add one short, lightly playful closing line crediting it (e.g. "Filming assisted by my new best friend, the [gear] ;)").
+- bottomHashtags: 8-12 lowercase hashtags relevant to this video, broader than topHashtags (mix specific + genre + niche).
+
 Return ONLY valid JSON, no markdown:
-{"instagram_facebook_tiktok":{"caption":"...","hashtags":"..."}}`,
-    assetScorePrompt:`You are a social media strategist for personal creator accounts in music. Analyse this asset for Itay Kashti's personal Instagram.
+{"instagram_facebook_tiktok":{"caption":"...","hashtags":"..."},"youtube_longform":{"topHashtags":"#tag1 #tag2 #tag3","story":"paragraph one\\n\\nparagraph two\\n\\nparagraph three","bottomHashtags":"#tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8"}}`,
+    assetScorePrompt:`You are a social media strategist for personal creator accounts in music. Analyse this asset for Itay Kashti's personal channels (Instagram and YouTube long-form).
 Score out of 10: VIRAL POTENTIAL and ENGAGEMENT POTENTIAL.
 Also suggest 2-4 short audience labels (3-5 words each) that best fit THIS specific asset — don't force a single generic category if the content naturally spans multiple audiences.
 Return ONLY valid JSON, no markdown:
 {"viral":{"score":7,"verdict":"One-line verdict","tip":"One improvement"},"engagement":{"score":8,"verdict":"One-line verdict","tip":"One improvement"},"overall":"One sentence overall read","audienceOptions":["Musicians & producers","Music fans"]}`,
-    captionScorePrompt:`Score this Instagram caption for a personal music creator account out of 10.
+    captionScorePrompt:`Score these captions for Itay Kashti's personal channels out of 10 each: does it feel genuine and specific (not templated), matches the asset energy, serves the audience.
 Return ONLY valid JSON, no markdown:
-{"instagram_facebook_tiktok":{"score":8,"verdict":"One-line verdict","tip":"One improvement"}}`,
+{"instagram_facebook_tiktok":{"score":8,"verdict":"One-line verdict","tip":"One improvement"},"youtube_longform":{"score":8,"verdict":"One-line verdict","tip":"One improvement"}}`,
   }
 };
 
@@ -990,12 +1048,13 @@ async function generateDrafts(){
     if(S.mode==='drive'&&S.driveFile){if(imgs){content=buildContentWithImages('Write all outputs. Return only JSON.');}else{mcpServers=[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'google-drive-mcp'}];content='Drive file: "'+S.driveFile.name+'" ('+S.driveFile.mimeType+')\n'+contextText()+'\nReturn only JSON.';}}
     else if(imgs){content=buildContentWithImages('Write all outputs. Return only JSON.');}
     else{content='Asset: '+S.assetType+' — '+(S.asset?.name||'file')+'\n'+contextText()+'\nReturn only JSON.';}
-    const body={model:'claude-sonnet-4-6',max_tokens:1500,system:acc.systemPrompt,messages:[{role:'user',content}]};
+    const body={model:'claude-sonnet-4-6',max_tokens:2000,system:acc.systemPrompt,messages:[{role:'user',content}]};
     if(mcpServers)body.mcp_servers=mcpServers;
     const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const data=await res.json();
     const txt=data.content?.find(b=>b.type==='text')?.text||'';
     S.drafts=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    if(S.drafts.youtube_longform)assembleYoutubeLongform(S.drafts.youtube_longform);
     S.approved={};S.captionScores=null;
     renderDraftsPage();goTo('drafts');scoreCaptions();
   }catch(e){
