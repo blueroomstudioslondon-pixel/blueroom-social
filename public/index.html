@@ -4,6 +4,9 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Blue Room · Social Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0D0D0D; --bg2: #111; --border: #1E1E1E; --border2: #252525;
@@ -11,6 +14,7 @@
     --accent: #D4A853; --accent-rgb: 212,168,83;
     --green: #5DBB7E; --red: #C05050;
     --mono: 'SF Mono','Fira Code','Consolas',monospace;
+    --serif: 'Playfair Display', Georgia, serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Inter','Helvetica Neue',sans-serif; font-size: 14px; line-height: 1.5; min-height: 100vh; }
@@ -25,8 +29,8 @@
   .acct-btn.active { background: #1C1C1C; }
   .acct-dot { width: 5px; height: 5px; border-radius: 50%; opacity: 0.3; transition: opacity 0.15s; }
   .acct-btn.active .acct-dot { opacity: 1; }
-  .acct-name { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); font-weight: 400; transition: color 0.15s; }
-  .acct-btn.active .acct-name { font-weight: 700; }
+  .acct-name { font-family: var(--serif); font-style: italic; font-size: 13px; letter-spacing: 0; color: var(--dim); font-weight: 500; transition: color 0.15s; }
+  .acct-btn.active .acct-name { font-weight: 600; }
   .acct-handle { font-family: var(--mono); font-size: 9px; color: #222; transition: color 0.15s; }
   .acct-btn.active .acct-handle { color: #555; }
 
@@ -56,8 +60,8 @@
   .page { display: none; }
   .page.active { display: block; }
 
-  h1 { font-size: 22px; font-weight: 300; color: var(--text); letter-spacing: -0.02em; margin-bottom: 5px; }
-  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  h1 { font-family: var(--serif); font-size: 32px; font-weight: 500; color: var(--text); letter-spacing: -0.01em; margin-bottom: 8px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 24px; font-style: italic; }
 
   .mode-toggle { display: flex; background: #0F0F0F; border-radius: 8px; border: 1px solid var(--border); padding: 3px; gap: 2px; width: fit-content; margin-bottom: 16px; }
   .mode-btn { background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 5px 13px; cursor: pointer; font-family: var(--mono); font-size: 11px; color: var(--muted); transition: all 0.15s; }
@@ -110,7 +114,7 @@
   .score-chevron { color: var(--muted); font-size: 11px; }
   .score-body { padding: 0 16px 16px; border-top: 1px solid var(--border); display: none; }
   .score-body.open { display: block; }
-  .score-overall { color: var(--muted); font-size: 13px; font-style: italic; line-height: 1.6; margin: 13px 0 14px; }
+  .score-overall { font-family: var(--serif); color: var(--muted); font-size: 14px; font-style: italic; line-height: 1.6; margin: 13px 0 14px; }
   .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   @media (max-width:500px) { .score-grid { grid-template-columns: 1fr; } }
   .score-card { background: var(--bg); border-radius: 10px; padding: 14px; border: 1px solid var(--border); }
@@ -134,7 +138,7 @@
   .char-count.over { color: var(--red); }
   .card-section-label { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; margin-top: 10px; }
   .card-divider { border-top: 1px solid var(--border); margin: 10px 0; }
-  .caption-text { color: var(--text); font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+  .caption-text { font-family: var(--serif); color: var(--text); font-size: 15px; line-height: 1.75; white-space: pre-wrap; }
   .hashtag-text { color: var(--muted); font-size: 12px; line-height: 1.6; margin-top: 8px; }
   .platform-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
   .platform-tag { border-radius: 4px; padding: 2px 7px; font-family: var(--mono); font-size: 9px; border: 1px solid; }
@@ -305,7 +309,7 @@
       <div class="q-grid">
         <div class="q-field">
           <span class="q-label">Category</span>
-          <select class="q-select" id="qCategory">
+          <select class="q-select" id="qCategory" onchange="toggleCustomField('qCategory','qCategoryCustom')">
             <option value="">Select...</option>
             <option>Performance / Live</option>
             <option>Studio session</option>
@@ -317,6 +321,7 @@
             <option>Cinematic / Atmospheric</option>
             <option>Mixed / Multiple</option>
           </select>
+          <input type="text" class="q-select" id="qCategoryCustom" placeholder="e.g. Gear demo" style="display:none;margin-top:6px" oninput="S.customCategory=this.value">
         </div>
         <div class="q-field">
           <span class="q-label">People in frame</span>
@@ -331,7 +336,7 @@
         </div>
         <div class="q-field">
           <span class="q-label">Color palette</span>
-          <select class="q-select" id="qColor">
+          <select class="q-select" id="qColor" onchange="toggleCustomField('qColor','qColorCustom')">
             <option value="">Select...</option>
             <option>Warm / Golden / Earthy</option>
             <option>Cool / Blue / Neutral</option>
@@ -340,10 +345,11 @@
             <option>Black and White / Desaturated</option>
             <option>Mixed / Natural</option>
           </select>
+          <input type="text" class="q-select" id="qColorCustom" placeholder="e.g. Neon pink and teal" style="display:none;margin-top:6px" oninput="S.customColor=this.value">
         </div>
         <div class="q-field">
           <span class="q-label">Mood / Tone</span>
-          <select class="q-select" id="qMood">
+          <select class="q-select" id="qMood" onchange="toggleCustomField('qMood','qMoodCustom')">
             <option value="">Select...</option>
             <option>Energetic / High energy</option>
             <option>Calm / Reflective</option>
@@ -353,6 +359,7 @@
             <option>Playful / Fun</option>
             <option>Professional / Polished</option>
           </select>
+          <input type="text" class="q-select" id="qMoodCustom" placeholder="e.g. Nostalgic" style="display:none;margin-top:6px" oninput="S.customMood=this.value">
         </div>
         <div class="q-field">
           <span class="q-label">Setting</span>
@@ -376,7 +383,7 @@
         </div>
         <div class="q-field">
           <span class="q-label">Main audience</span>
-          <select class="q-select" id="qAudience" onchange="toggleCustomAudience()">
+          <select class="q-select" id="qAudience" onchange="toggleCustomField('qAudience','qAudienceCustom')">
             <option value="">Select...</option>
             <option>Musicians / Artists</option>
             <option>Music fans / Listeners</option>
@@ -572,7 +579,8 @@ const S = {
   driveFile:null, notes:'', sessionTitle:'',
   assetScores:null, captionScores:null, drafts:null, approved:{}, groups:[],
   transcript:'', audioBlob:null,
-  videoFrames:null, videoFramesPromise:null, videoScorePromise:null, customAudience:'',
+  videoFrames:null, videoFramesPromise:null, videoScorePromise:null,
+  customAudience:'', customCategory:'', customColor:'', customMood:'',
 };
 
 const ACCOUNTS = {
@@ -610,9 +618,13 @@ Return ONLY valid JSON, no markdown:
 Score on TWO dimensions out of 10:
 VIRAL POTENTIAL: immediate visual hook, shareability, surprise/beauty/intrigue.
 ENGAGEMENT POTENTIAL: invites conversation, fans would save or tag someone, behind-the-scenes authenticity.
-Also suggest 2-4 short audience labels (3-5 words each) that best fit THIS specific asset — don't force a single generic category if the content naturally spans multiple audiences (e.g. a BTS video about AI tools can suit both musicians and industry pros at once).
+Also suggest, based on what you actually see in the frames:
+- audienceOptions: 2-4 short audience labels (3-5 words each) that best fit THIS specific asset — don't force a single generic category if the content naturally spans multiple audiences (e.g. a BTS video about AI tools can suit both musicians and industry pros at once).
+- categoryOptions: 2-4 short content-category labels (e.g. "Performance / Live", "Behind the scenes") that fit what's actually shown.
+- colorOptions: 2-4 short color/mood-palette labels (e.g. "Warm / Golden / Earthy") matching the actual footage.
+- moodOptions: 2-4 short mood/tone labels (e.g. "Cinematic / Epic") matching the actual footage.
 Return ONLY valid JSON, no markdown:
-{"viral":{"score":7,"verdict":"One-line verdict","tip":"One specific improvement"},"engagement":{"score":8,"verdict":"One-line verdict","tip":"One specific improvement"},"overall":"One sentence overall read","audienceOptions":["Musicians & producers","Industry pros & labels"]}`,
+{"viral":{"score":7,"verdict":"One-line verdict","tip":"One specific improvement"},"engagement":{"score":8,"verdict":"One-line verdict","tip":"One specific improvement"},"overall":"One sentence overall read","audienceOptions":["Musicians & producers","Industry pros & labels"],"categoryOptions":["Behind the scenes","Studio session"],"colorOptions":["Dark / Moody / Low-light","Warm / Golden / Earthy"],"moodOptions":["Cinematic / Epic","Raw / Gritty / Authentic"]}`,
     captionScorePrompt:`You are a social media strategist. Score how well these captions serve the asset for Blue Room Studios. Score each out of 10.
 Return ONLY valid JSON, no markdown:
 {"instagram_facebook_tiktok":{"score":8,"verdict":"One-line verdict","tip":"One improvement"},"linkedin":{"score":7,"verdict":"One-line verdict","tip":"One improvement"},"youtube":{"score":9,"verdict":"One-line verdict","tip":"One improvement"}}`,
@@ -643,9 +655,13 @@ Return ONLY valid JSON, no markdown:
 {"instagram_facebook_tiktok":{"caption":"...","hashtags":"..."},"youtube_longform":{"topHashtags":"#tag1 #tag2 #tag3","story":"paragraph one\\n\\nparagraph two\\n\\nparagraph three","bottomHashtags":"#tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8"}}`,
     assetScorePrompt:`You are a social media strategist for personal creator accounts in music. Analyse this asset for Itay Kashti's personal channels (Instagram and YouTube long-form).
 Score out of 10: VIRAL POTENTIAL and ENGAGEMENT POTENTIAL.
-Also suggest 2-4 short audience labels (3-5 words each) that best fit THIS specific asset — don't force a single generic category if the content naturally spans multiple audiences.
+Also suggest, based on what you actually see in the frames:
+- audienceOptions: 2-4 short audience labels (3-5 words each) that best fit THIS specific asset — don't force a single generic category if the content naturally spans multiple audiences.
+- categoryOptions: 2-4 short content-category labels matching what's actually shown.
+- colorOptions: 2-4 short color/mood-palette labels matching the actual footage.
+- moodOptions: 2-4 short mood/tone labels matching the actual footage.
 Return ONLY valid JSON, no markdown:
-{"viral":{"score":7,"verdict":"One-line verdict","tip":"One improvement"},"engagement":{"score":8,"verdict":"One-line verdict","tip":"One improvement"},"overall":"One sentence overall read","audienceOptions":["Musicians & producers","Music fans"]}`,
+{"viral":{"score":7,"verdict":"One-line verdict","tip":"One improvement"},"engagement":{"score":8,"verdict":"One-line verdict","tip":"One improvement"},"overall":"One sentence overall read","audienceOptions":["Musicians & producers","Music fans"],"categoryOptions":["Studio session","Talking head / Interview"],"colorOptions":["Dark / Moody / Low-light","Cool / Blue / Neutral"],"moodOptions":["Calm / Reflective","Raw / Gritty / Authentic"]}`,
     captionScorePrompt:`Score these captions for Itay Kashti's personal channels out of 10 each: does it feel genuine and specific (not templated), matches the asset energy, serves the audience.
 Return ONLY valid JSON, no markdown:
 {"instagram_facebook_tiktok":{"score":8,"verdict":"One-line verdict","tip":"One improvement"},"youtube_longform":{"score":8,"verdict":"One-line verdict","tip":"One improvement"}}`,
@@ -732,16 +748,17 @@ async function transcribeAudio() {
 
 // ─── VIDEO QUESTIONNAIRE ──────────────────────────────────────────────────────
 function buildVideoContext() {
+  const resolve = (selectId, customId) => document.getElementById(selectId).value === '__custom__'
+    ? (document.getElementById(customId).value || '')
+    : document.getElementById(selectId).value;
   const vals = {
-    category: document.getElementById('qCategory').value,
+    category: resolve('qCategory','qCategoryCustom'),
     people: document.getElementById('qPeople').value,
-    color: document.getElementById('qColor').value,
-    mood: document.getElementById('qMood').value,
+    color: resolve('qColor','qColorCustom'),
+    mood: resolve('qMood','qMoodCustom'),
     setting: document.getElementById('qSetting').value,
     camera: document.getElementById('qCamera').value,
-    audience: document.getElementById('qAudience').value === '__custom__'
-      ? (document.getElementById('qAudienceCustom').value || '')
-      : document.getElementById('qAudience').value,
+    audience: resolve('qAudience','qAudienceCustom'),
     text: document.getElementById('qText').value,
     message: document.getElementById('qMessage').value,
   };
@@ -788,22 +805,26 @@ async function scoreVideoAsset(){
   finally{if(btn){btn.disabled=false;btn.textContent=label;}}
   document.getElementById('scoreBadges').innerHTML='';
   renderScorePanel(S.assetScores,'assetScorePanel','scoreBody','scoreChevron','scoreBadges','scoreOverall','viralCard','engCard');
-  populateAudienceOptions(S.assetScores&&S.assetScores.audienceOptions);
+  const s=S.assetScores||{};
+  populateSuggestSelect('qCategory','qCategoryCustom',s.categoryOptions,['Performance / Live','Studio session','Behind the scenes','Cinematic / Atmospheric']);
+  populateSuggestSelect('qColor','qColorCustom',s.colorOptions,['Warm / Golden / Earthy','Dark / Moody / Low-light','Cool / Blue / Neutral','Vibrant / Saturated']);
+  populateSuggestSelect('qMood','qMoodCustom',s.moodOptions,['Cinematic / Epic','Calm / Reflective','Raw / Gritty / Authentic','Energetic / High energy']);
+  populateSuggestSelect('qAudience','qAudienceCustom',s.audienceOptions,['Musicians / Artists','Music fans / Listeners','Industry / Professionals','General / Broad']);
   renderContextAssetPreview();
 }
 
-// ─── AUDIENCE SUGGESTIONS ───────────────────────────────────────────────────────
-function populateAudienceOptions(options){
-  const sel=document.getElementById('qAudience');
+// ─── AI-SUGGESTED FIELD OPTIONS ─────────────────────────────────────────────────
+function populateSuggestSelect(selectId,customId,options,fallback){
+  const sel=document.getElementById(selectId);
   const prev=sel.value;
-  const list=(options&&options.length)?options:['Musicians / Artists','Music fans / Listeners','Industry / Professionals','General / Broad'];
+  const list=(options&&options.length)?options:fallback;
   sel.innerHTML='<option value="">Select...</option>'+list.map(o=>'<option>'+escHtml(o)+'</option>').join('')+'<option value="__custom__">Other (type your own)…</option>';
   if(list.includes(prev)||prev==='__custom__')sel.value=prev;
-  toggleCustomAudience();
+  toggleCustomField(selectId,customId);
 }
-function toggleCustomAudience(){
-  const sel=document.getElementById('qAudience');
-  const custom=document.getElementById('qAudienceCustom');
+function toggleCustomField(selectId,customId){
+  const sel=document.getElementById(selectId);
+  const custom=document.getElementById(customId);
   const isCustom=sel.value==='__custom__';
   custom.style.display=isCustom?'block':'none';
   if(isCustom)custom.focus();
@@ -913,7 +934,7 @@ function handleFileSelect(e){const f=e.target.files[0];if(f)processFile(f);}
 function processFile(file) {
   const type=file.type.startsWith('video')?'video':'image';
   S.asset=file;S.assetType=type;S.assetScores=null;S.assetBase64=null;
-  S.videoFrames=null;S.videoFramesPromise=null;S.videoScorePromise=null;S.customAudience='';
+  S.videoFrames=null;S.videoFramesPromise=null;S.videoScorePromise=null;S.customAudience='';S.customCategory='';S.customColor='';S.customMood='';
   S.assetPreviewUrl=URL.createObjectURL(file);
   const preview=document.getElementById('dropPreview');
   const sizeMB=(file.size/1024/1024).toFixed(1);
@@ -1103,7 +1124,7 @@ function exportAll(){const lines=S.groups.filter(g=>S.approved[g.id]&&S.drafts?.
 
 function resetAll(){
   S.asset=null;S.assetType=null;S.assetBase64=null;S.assetPreviewUrl=null;
-  S.videoFrames=null;S.videoFramesPromise=null;S.videoScorePromise=null;S.customAudience='';
+  S.videoFrames=null;S.videoFramesPromise=null;S.videoScorePromise=null;S.customAudience='';S.customCategory='';S.customColor='';S.customMood='';
   S.driveFile=null;S.notes='';S.sessionTitle='';S.transcript='';S.audioBlob=null;
   S.assetScores=null;S.captionScores=null;S.drafts=null;S.approved={};
   document.getElementById('dropPlaceholder').style.display='block';
@@ -1119,6 +1140,7 @@ function resetAll(){
   document.getElementById('assetScorePanel').style.display='none';document.getElementById('scoreBadges').innerHTML='';
   document.getElementById('scoreBody').classList.remove('open');document.getElementById('scoreChevron').textContent='▼';
   ['qCategory','qPeople','qColor','qMood','qSetting','qCamera','qAudience','qText'].forEach(id=>{document.getElementById(id).value='';});
+  ['qCategoryCustom','qColorCustom','qMoodCustom','qAudienceCustom'].forEach(id=>{const el=document.getElementById(id);el.value='';el.style.display='none';});
   document.getElementById('qMessage').value='';document.getElementById('videoSessionTitle').value='';
   document.getElementById('recordBtn').className='btn-record';document.getElementById('recordBtnText').textContent='Start recording';
   document.getElementById('recordDot').className='record-dot';document.getElementById('transcribeBtn').style.display='none';
